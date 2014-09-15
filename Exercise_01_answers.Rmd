@@ -1,0 +1,258 @@
+---
+title: "Lab 1"
+author: "Michael Dann"
+date: "Tuesday, September 09, 2014"
+output: html_document
+---
+
+## Questions 1-7
+
+```{r}
+# Q 1a: ln(1)
+log(1)
+
+# Q 1b: ln(0)
+log(0)
+
+# Q 1c: ln(e))
+e <- exp(1)
+log(e)
+
+# Q 1d: ln(-5)
+log(-5)
+
+# Q 1e: -ln(5)
+-log(5)
+
+# Q 1f: log(1/5)
+log(1/5)
+
+# Q 1g:  How does R represent when the output of a function is not a number? **A:** c("NaN", "NA", "-Inf","Inf")
+
+# Q 2: Why are we multiplying the results of the atan and atan2 functions by 180/pi? **A:** Radians -> Degrees conversion
+
+# Q 3: How is the atan2 function different from the atan function? **A:** Atan expects the ratio of the opposite/adjacent sides. Atan2 expects the c(x,y) coord of the head of the hypotenuse vector.
+
+# Q 4: What is the difference between log and log10? **A:** log() is base e, log10() is base 10. log10() is a wrapper for log() with the "base" param set to 10.
+
+# Q 5: Given a right triangle with sides x = 5 and y = 13, calculate the length of the hypotenuse (show code).
+x <- 5
+y <- 13
+hypotenuse <- sqrt(x^2 + y^2 )
+hypotenuse <- sqrt(5^2+13^2)
+print(hypotenuse)
+
+# Q 6: If a population starts with a density of 5 individuals/hectare and grows exponentially at a growth rate r=0.04/year, what is the size of the population in π years?
+p0 <- 5
+r  <- 0.04
+p  <- p0*exp(0.04*pi)
+print(p)
+
+# Q 7: Subtract the month you were born from the remainder left after you divide the year you were born by the day you were born.
+year  <- 1983
+month <- 05
+day   <- 31
+output<- (year%%day)-month
+print(output)
+```
+
+
+## Questions 8-12
+```
+x = 1:10
+seq(1,10,by=0.5)
+seq(1,by=0.5,length=10)
+rep(1,10)
+x=seq(0,3,by=0.01)
+sum(1:10)    ## sum up all values in a vector
+diff(1:10)  	## calculate the differences between adjacent values in a vector 
+cumsum(1:10)		## cumulative sum of values in a vector
+prod(1:10)		## product of values in a vector
+```
+
+```{r}
+# Q 8:  Describe the difference in output between sum and cumsum. **A:** -cumsum()- is an elementwise cumulative sum. -sum()- is a scalar sum of the whole thing.
+
+# Q 9:	Generate a sequence of even numbers from -6 to 6. 
+(-3:3)*2
+
+# Q 10:	Generate a sequence of values from -4.8 to -3.43 that is length 8 (show code)
+a <- seq(from=-4.8, to=-3.43, length.out = 8)
+print(a)
+
+# Q 10a:	What is the difference between values in this sequence?
+a[2]-a[1] #0.1957143
+
+# Q 10b:	What is the sum of the exponential of this sequence?
+sum(exp(a)) # 0.144133
+
+# Q 11:	Calculate a second difference [a difference of differences] for the sequence 1:10 (show code)
+diff(x = diff(x = 1:10, differences = 1), differences = 1)
+
+# Q 12: Save the frog data file delimited in a pipe-delimited format (i.e. separated by ‘|’). Open the file up in a text editor and cut-and-paste the first few lines of the file into your Rscript file (just so I can see what you did).  Load the data back up into R as ‘dat2’ (show code)
+dat = read.table("data/Lab1_frogs.txt",header=TRUE)
+write.table(dat, "data/Lab1_frogs.pipe", sep="|")
+# First two lines:
+# "frogs"|"tadpoles"|"color"|"spots"
+# "1"|1.1|2.03698175474231|"red"|TRUE
+```
+
+## Questions 13-18
+```{r} 
+# Q 13:  Show just the spots data as characters
+as.character(dat$spots)
+# Q 14:	Show the 3rd through 8th rows of the 1st  though 3rd columns
+dat[3:8,1:3]
+# Q 15:	Show the first 3 rows
+dat[1:3,]
+# Q 16: Create a character vector that contains the names of 4 super heros.
+super_heroes <- c("Superman","Batman","Wonder Woman", "Harley Quinn")
+print(super_heroes)
+# Q 17:	Show just the odd numbered rows in the frog data. Write this code for the GENERAL CASE (i.e. don’t just type c(1,3,5,…) but use functions that you learned in previous sections to set up the sequence.
+row_index <- 1:dim(dat)[1] # all the rows
+row_index <- row_index[row_index%%2==1] # only the odd rows
+dat[row_index,]
+# Q 18:  For the frog data set
+# Q 18a:	display just the rows where frogs have spots
+dat[dat$spots, ]
+# Q 18b:	display just the rows where frogs are blue
+dat[dat$color=="blue", ]
+# Q 18c:	how many blue tadpoles are there?
+sum(dat[dat$color=="blue", "tadpoles"])
+# Q 18d:	create a new object containing just the rows where there are between 3 and 5 tadpoles
+new_object <- subset(dat, tadpoles > 3 & tadpoles < 5)
+print(new_object)
+# Q 18e:	display just the rows where there are less than 2.5 red frogs
+dat[dat$frogs < 2.5 & dat$color == "red",]
+# Q 18f:	display where either frogs do not have spots or there are more than 5 frogs
+dat[dat$frogs > 5 | !dat$spots, ]
+```
+
+## Questions 19-22
+
+```{r}
+# Q 19: Plot the following lines from 0 to 3 (hint: define x as a sequence with a small step size). Make sure to make the resolution of x sufficiently small to see the curves 
+# Q 19 a:	ln(x)
+library(ggplot2)
+library(plyr)
+x <- seq(0,3,by = 0.1)
+df <- data.frame(x,y)
+p <- ggplot() + geom_line(data=df, aes(x,log(x))) + theme_bw() + labs(title = "ln(x) v x", y="ln(x)")
+p
+
+# Q 19 b: $e^{-x}$
+p <- ggplot() +
+     geom_line(data = df, aes(x,exp(-x))) +
+     theme_bw() +
+     labs(title = "e^(-x) v x", y="e^(-x)")
+p
+# Q 20:	Make a barplot of the median number of frogs grouped by whether they have spots or not.
+dat_median <- ddply(dat, "spots", summarise, median_frogs = median(frogs))
+p <- ggplot() + 
+     geom_bar(data = dat_median,
+              stat = "identity",
+              aes(y = median_frogs,
+                  x = spots)) +
+     theme_bw() +
+     labs(title = "Median Number of Frogs by Spot Presence", 
+          x = "Median Number of Frogs",
+          y = "Spots")
+p
+
+# Q 21:	Plot a histogram of blue frogs
+p <- ggplot() +
+     geom_histogram(binwidth = 0.5,
+                    data = dat[dat$color=="blue",],
+                    aes(x = frogs)) +
+     theme_bw() + 
+     labs(title = "Blue Frogs", 
+          x = "Count",
+          y = "Frogs")
+p
+# Q 22:	Use apply to calculate the across-population standard deviations in the numbers of frogs and tadpoles
+apply(dat[,c("frogs","tadpoles")], 2, sd)
+```
+
+
+## Question 23-27
+```{r} 
+# Q 23:  Using the frog data
+# Q 23 a:	Fit a linear model of tadpoles as a function of frogs for just the RED individuals and report the summary data of the fit.
+red_dat <- subset(dat, color=="red")
+reg1 <- lm(formula = tadpoles ~ frogs + 1, data = red_dat)
+summary(reg1)
+# Q 23 b:	Make a scatter plot of this data that includes the regression line.
+plot(red_dat[, c("frogs","tadpoles")])
+abline(reg1)  		# adding regression line to the scatter plot
+# Q 23 c:	Fit a series of linear models of tadpoles as a function of frogs, spots, color, and their interaction terms. Build up from a simple model to the most complex model that is supported by the available data (i.e. all terms should be significant). Also test the full model that includes all variables and interaction terms.
+
+fm2 <- "tadpoles ~ spots + 1"
+fm3 <- "tadpoles ~ frogs + spots + 1"
+fm4 <- "tadpoles ~ frogs + spots + frogs*spots + 1"
+
+reg2 <- lm(formula = fm2, data = red_dat)
+reg3 <- lm(formula = fm3, data = red_dat)
+reg4 <- lm(formula = fm4, data = red_dat)
+
+summary(reg2)
+summary(reg3)
+summary(reg4)
+```
+
+```
+# Q 24: Write an if statement that makes a scatter plot of x if all the values are positive, and plots a histogram otherwise.
+if (all(x>=0)){
+  plot(x)
+} else {
+  hist(x)
+}
+```
+
+```{r}
+# Q 25: Convert the more complicated graphing example at the end of  “Classic Tests” into a function that will make the same plots for any data set. Show how you would call the function passing it just the subset of data where there are 5 or more tadpoles.
+plot_wrap <- function(dat){
+  # Fixed formula, fixed variables
+  reg1 <- lm(formula = tadpoles ~ frogs + 1, data = dat)
+  plot(dat$frogs,dat$tadpoles,
+       cex=1.5,      	# increase the symbol size
+       col=as.character(dat$color),	# change the symbol color by name
+       pch=dat$spots+1,			# change the symbol (by number)
+       cex.axis=1.3,			# increase the font size on the axis 
+       xlab="Frog Density",		# label the x axis
+       ylab="Tadpole Density",		# label the y axis
+       cex.lab=1.3,			# increase the axis label font size
+       main="Frog Reproductive Effort", # title
+       cex.main=2			# increase title font size
+       )
+  abline(reg1,col="green",		# add the regression line
+       ,lwd=3)				# increase the line width
+  legend("topleft",
+         c("Red no spot","Blue no spot","Red spots","Blue Spots"),
+         pch=c(1,1,2,2),
+         col=c("red","blue","red","blue"),cex=1.3
+         )
+}
+plot_wrap(dat = dat[dat$tadpoles >= 5,])
+
+```
+
+
+
+```{r}
+# Q 26:  Starting with a vector x = 1:10, write a for loop that adds 5 to each value in the vector. Note that it is permissible to assign an element in a vector to itself (e.g. x[i] = x[i] + 5)
+x = 1:10
+# Note: superfluous. "x <- x + 5" suffices
+for (i in 1:length(x)){
+  x[i] = x[i] + 5
+}
+x
+# Q 27:	Modify the logistic growth code to simulate discrete-time exponential growth and plot the output.
+NT = 100    	## number of time steps
+N0 = 1				## initial population size
+r = 0.2				## population growth rate
+N = rep(N0,NT)
+for(t in 2:NT){
+	N[t] = (1 + r) * N[t-1]    ## discrete exponential growth
+}
+plot(N)
+```
