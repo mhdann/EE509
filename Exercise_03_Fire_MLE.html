@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=9" >
+
+<title>Case study 1: Survival Analysis</title>
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+
+</style>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+
+</head>
+
+<body>
+<p>In this lab we will be looking at ways to implement Maximum Likelihood analyses in R, making use of both analytical solutions and numerical optimization.  This lab will present two case study examples and then ask you to work through a third example on your own.  This lab report will require you to come up with your own R code much more than the previous two, therefore you are strongly encourage to look at the assignment at the end before you start so that you know what you will be asked to do.  You will have all the tools you need to solve the assignment after the first case study so you might consider starting the assignment then so you have a greater chance of finishing the final independent part before the lab ends.</p>
+
+<h2>Case study 1: Survival Analysis</h2>
+
+<p>Consider the example presented in lecture and in Section 3.2 of the book where the survival of a population of plants is being followed by an industrious graduate student conducting a drought experiment.  The goal of this analysis is to estimate the mortality rate, \( \rho \).  The data records the day that each plant died, which has to be positive, and if we assume a constant mortality rate then the underlying process should conform to an exponential distribution:</p>
+
+<p>\[ L = Pr(a \vert \rho) \propto Exp(a \vert \rho) = \prod \rho \, exp(-\rho a_i) \]</p>
+
+<p>First, lets load up the data set of the lifespan of individuals and take a quick look at the data.</p>
+
+<pre><code class="r">## vector of survival times (days)
+dat &lt;- c(1,9,9,5,27,9,29,1,11,3,3,11,13,6,11,2,4,1,37,10)
+
+## some basic exploratory analysis
+hist(dat)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAe1BMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OWU5OY85j485j9plAABlADllAGVlOQBlZjlltbVltf2POQCPOTmPtY+P29qP2/21ZgC1/rW1/v3ajzna24/a/rXa/tra/v39tWX924/9/rX9/tr9/v30A+qzAAAAKXRSTlP/////////////////////////////////////////////////////AFL0IIcAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAtaSURBVHic7d0Nd9rYFUbhkT1NYVIXkpmBtFDo1Aj4/7+wukIiEBPwOeYuztW7n7Vae+yLOM62Pmxj/Msekn559AB4DMKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8qMGF306fV/v9bv68OrzWW84+sNF6XD0tvt/Dp9c7bfeBBhz+7M3L6iOBzm59Fv5j232gAYdvX2v21ep5tZtXVTXa79fNi8k+vbt6/k/Tbzd/+qPZlzfNm5s9elP9vXn7qlnUxzysb299iJ1e/TOFP9yk326BBh5+O61StP8dAi3TfzQv216/jlP49N6/DoteN1WvO1x067+Hb19Lr59vt0QDDN+3S+HrcXdYTofketzs1tvp06IeN2XXVRt+1N/sebWp0g2qWVqS3nZcfzygH2/Y34RDfRjn4dv/SvtvCrRpK6+rWfvK9nCoX/Q3SuFHbc3+rcf1x7zHG/Y3IXwYF87xVbfP/ix8u+YY/vunw5Xw/U0IH8aFL+eWXbpLh/qUeN1cwKU3/Rj+yqG+vwnhwzgPf7JnXr64S4k31eU9/rj+mPd4cdff5LDdEg08fHsY7w7nzZm5/3KuOUH3X86lxE29SXcGOAt/XH/cr1P5f6ZzfHeTbrsFGlz4d9sUWuxOJMN3V/6TR8/xSJLhD2f10aOneCjN8CC8KsKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8KMKLIrwowosivCjCiyK8KMKLIrwowosivCjCi7odvh5Xo/XxOf8wEDfD774t9utR0/9F+YlDhudm+O3X1X49ObzsHJ/583xlZXX/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" alt="plot of chunk unnamed-chunk-1"/> </p>
+
+<pre><code class="r">summary(dat)
+</code></pre>
+
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     1.0     3.0     9.0    10.1    11.0    37.0
+</code></pre>
+
+<pre><code class="r">n &lt;- length(dat)
+n
+</code></pre>
+
+<pre><code>## [1] 20
+</code></pre>
+
+<p>This problem has an analytical solution for the Maximum Likelihood Estimator (MLE), which we solved for earlier.  In order to illustrate the different ways to approach this problem we will solve the problem both analytically and numerically.  From eqn 3.4 we know the MLE of \( \rho \) to be</p>
+
+<pre><code class="r">##Analytical solution
+rho_mle &lt;- 1/mean(dat)
+rho_mle
+</code></pre>
+
+<pre><code>## [1] 0.09901
+</code></pre>
+
+<p>Recall that when solving for this analytical solution we first transformed the likelihood into the negative log-likelihood in order to make the arithmetic simpler, but that because this transformation is monotonic it doesn&#39;t change the optimum.  The negative log likelihood associated with our MLE estimate is found by plugging this value into the log-likelihood function</p>
+
+<p>\[  -log(L) = -n \cdot log(\rho) + \rho \sum_{i=1}^{n} a_i \]</p>
+
+<pre><code class="r">## negative log-likelihood at solution
+-n*log(rho_mle) + rho_mle*sum(dat)
+</code></pre>
+
+<pre><code>## [1] 66.25
+</code></pre>
+
+<p>We can compare this likelihood with those for other possible values for \( \rho \) by plotting the likelihood profile.  In order to do this lets define a function in R that calculates the negative log likelihood </p>
+
+<pre><code class="r">## Negative log LiKelihood function for the EXPonential model
+## Version 1
+lkexp &lt;- function(rho){
+  -n*log(rho) + rho*sum(dat)
+}
+lkexp(rho_mle)
+</code></pre>
+
+<pre><code>## [1] 66.25
+</code></pre>
+
+<p>As you can see, when we pass the MLE for \( \rho \) to the function we just defined it returns the same value as when we calculated the likelihood explicitly.  The R syntax for defining a function involves assigning it a name (<code>lkexp &lt;- function</code>), specifying what the function&#39;s parameters are ( <code>function(rho)</code> ), and specifying what the function computes ( everything between the { &hellip; } ).  We now use this function to plot the likelihood in both the -log and linear domains as a function of the parameter \( \rho \), adding a vertical line to indicate the value of \( \rho \) where the MLE is and a horizontal line that shows the value of the likelihood function at the MLE.</p>
+
+<pre><code class="r">## likelihood profile
+
+rseq &lt;- seq(0.01,0.4,length=200)        ## range of rho values on the x-axis
+
+## Plot in the log domain:
+plot(rseq,lkexp(rseq),main=&quot;Negative Log Likelihood&quot;,
+    xlab=&quot;rho&quot;,ylab=&quot;-log(L)&quot;,type=&#39;l&#39;)
+abline(v=rho_mle,lty=2)
+abline(h=lkexp(rho_mle),lty=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAk1BMVEX9/v0AAAAAADkAAGUAOTkAOY8AZo8AZrU5AAA5ADk5AGU5OQA5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlOY9lZgBlZrVltbVltf2POQCPOTmPOWWPjzmPj2WPtY+P29qP2/21ZgC1ZmW124+1/rW1/v3ajzna24/a/rXa/tra/v39tWX924/9/rX9/tr9/v1cqhfCAAAAMXRSTlP///////////////////////////////////////////////////////////////8AH5pOIQAAAAlwSFlzAAALEgAACxIB0t1+/AAAEQJJREFUeJztnYt647YRRkNtXalpvJWSNK2129ZWN6u21oXv/3QlSF0oi6RwGQAzmP98X2KvLGIGc3gBZJr4oQYq+SF3AiAPEK8UiFcKxCsF4pUC8UqBeKVAvFIgXikQrxSIVwrEKwXilQLxSoF4pUC8UiBeKRCvFIhXCsQrBeKVAvFKgXilQLxSIF4pMsUfVtVLXR/Xn75PvWvz0rxx7C37xdP7+Kbnn5rt79o4v/go/mE1FSIzYsU3NX1Q+I3ZOUaxE98FGxBvvkJ8chrx1fJU+G1VtYaP6+rT76bUu+aF2Vvzz6qaG0ebal6b3WB+fW/dV2teXPYbqO+P+OZnL5fNe0f8t0XVyj+30W+s+jvEU9OU/bfTqXZTVVW3FzRf/tD4MjtFVT397yJ+Z84Oh9Xs7fJew0V89+L82kD/p2fHWyP8vHlvb+g2vbRx21hVQTwxTdm/LZZGfGuo+6bZC7bV1Vd7qu/8NM6N/ct7zVv2F8XNT81ucdPAB/FNsNNrZvOe+GX7aq+NocZYIlb8983sdW0O55bZ284ccN1V1RzzPfGNgGX7j8t7TRNnte12zVteeg18FD/7szngL5tfxbean95v27hrjCVyxR9WfxwUv1+YF/rim1f/a756i+/aGxDfNQ7xyTgdyNXpVG+4nFy37fm3L77ezP5pruw3A3mnU/337emkXvdfvIjHqT4VrU8zCj8P7p7eL2Oz7sDsfjLvxDcngfYwP7/XNNGdGNqLwODgrvvp2fFp0NBtficeg7tUdD537VRqcypwc0buZmPNC0szCm/kdaf401yuvr637om/zMAuDdT34ptYy8vm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" alt="plot of chunk unnamed-chunk-5"/> </p>
+
+<pre><code class="r">## Plot in the linear domain
+plot(rseq,exp(-lkexp(rseq)),main=&quot;Likelihood&quot;,xlab=&quot;rho&quot;,ylab=&quot;L&quot;,type=&#39;l&#39;)
+abline(v=rho_mle,lty=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAeFBMVEX9/v0AAAAAADkAAGUAOTkAOY8AZrU5AAA5ADk5AGU5OQA5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlZgBltbVltf2POQCPOTmPOWWPtY+P29qP2/21ZgC124+1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v3coWvjAAAAKHRSTlP///////////////////////////////////////////////////8AvqouGAAAAAlwSFlzAAALEgAACxIB0t1+/AAADX9JREFUeJzt3Qt72kYahuHKqU2zdVeOu2vSrV0TTvr//3AR2LEwQmhOYr55n+eqC4nDDOG20MiI+JeGJPvl2neArhPwogEvGvCiAS8a8KIBLxrwogEvGvCiAS8a8KIBLxrwogEvGvCiAS8a8KIBLxrwogEvGvCiAS8a8KIBL5oG/Hp2u2wvNw9fXtuPo0++/+Z2/ukTn9o8HAYpIy34tl749hL48vq8xW/n1VPTLKqqvehs8f/Mqj1++5m66VzZ3aD6L/Dm+gy/aMFfqmrP2vlqaLt7/0znytungLfWJ/h/ZvXb77VP7x34ev+769nN8+6P3jx3ruyeCBbAm+sY/uZf7Qa/2m/E1c3zB/ye+Xa5ajf2nfPT8RX28fY6ht9x7zbgHvjd7wJfVKf7+PpjpX8Cz1N9Ma1nh4Xcu/H+CO7lbcF2As/irpg+w++e5+sD687yFL7/cO7fPNWT/YAXDXjRgBcNeNGAFw140YAXDXjRgBcNeNGAFw140YAXDXjRgBcNeNGAFw140YAXDXjRgBcNeNFC4CvKuYTwAbfNb5rSAl404EWzD09eAS8a8KLZh+fryyvgRQNeNOBFA140+/DklXl4vrz8sg5fNZdeZ6LeCoBno/fJOHz1/h85BrxotuGrzgc5BbxopuGrkys0tjLgkXcOeNEsw1cf/wfeNeBFA160QuCRd80wfNW9AN4x+/DTTFZcwIsGvGj24dnHexUOf/ipe0/OQ4dWHV8i71Yw/Ev7k9afmpc716FDAz6oUPjN42vTrO+X+0unoUMDPqhQ+O3356ZZ3TWr05+vCXzOBT/Vtz92+3a5unl2HTq0avCXdCG7q/rPwyPvlFn4k9GBdyoYfj2r2qf5yRd3J6ddAe9U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" alt="plot of chunk unnamed-chunk-5"/> </p>
+
+<p>This approach to finding the likelihood and plotting the likelihood profile presumes that we&#39;ve already solved the analytical solution for the log-likelihood.  If we want to avoid deriving that solution we can also express the log-likelihood in terms of the PDFs that we studied in lab last week.  We&#39;re modeling mortality rate based on an exponential distribution, so we can also find the likelihood using the <code>dexp</code> function.  Remember that in this context we are calculating the likelihood by <em>holding the data constant and varying the value of the parameter</em>.  In this case even though we&#39;re using the density function the plot of the function versus the parameter is no longer a density, as it would be if we held the parameters constant and looked at the probability of observing the data (i.e. the data on the x-axis).  As an example, if we wanted to find the likelihood of the first data-point conditional on the MLE for \( \rho \) we could write</p>
+
+<pre><code class="r">dexp(dat[1],rho_mle)
+</code></pre>
+
+<pre><code>## [1] 0.08968
+</code></pre>
+
+<p>While if we wanted the likelihoods of all the data-points we could calculate</p>
+
+<pre><code class="r">dexp(dat,rho_mle)
+</code></pre>
+
+<pre><code>##  [1] 0.089677 0.040615 0.040615 0.060351 0.006834 0.040615 0.005607
+##  [8] 0.089677 0.033318 0.073567 0.073567 0.033318 0.027333 0.054662
+## [15] 0.033318 0.081223 0.066632 0.089677 0.002539 0.036786
+</code></pre>
+
+<p>We can express these values in terms of log-likelihoods by passing the optional argument log = TRUE to the PDF</p>
+
+<pre><code class="r">dexp(dat,rho_mle,log=TRUE)
+</code></pre>
+
+<pre><code>##  [1] -2.412 -3.204 -3.204 -2.808 -4.986 -3.204 -5.184 -2.412 -3.402 -2.610
+## [11] -2.610 -3.402 -3.600 -2.907 -3.402 -2.511 -2.709 -2.412 -5.976 -3.303
+</code></pre>
+
+<p>Note that while it is possible to take the log of the PDF  <code>log(dexp(dat,rho_mle))</code>  this gives a value that is numerically less precise.  More important to know is that the PDFs in R will occasionally return a zero when the probability of a value is very small due to computer round-off errors.  Taking the log of this value then gives a -Inf [negative infinity] rather a small finite value.</p>
+
+<p>Recall that we are interested in the overall negative log-likelihood rather than the individual likelihoods, which in the log domain is simply the sum of the log-likelihoods times -1.  We can encapsulate this expression in a function just as we did before for the analytical log-likelihood
+<code>-sum(dexp(dat,rho_mle,log=TRUE))</code></p>
+
+<pre><code class="r">## likelihood function - version 2
+lkexp2 &lt;- function(rho){
+  -sum(dexp(dat,rho,log=TRUE))
+}
+lkexp2(rho_mle)
+</code></pre>
+
+<pre><code>## [1] 66.25
+</code></pre>
+
+<p>One important difference between lkexp2 and the original lkexp is that lkexp2 only makes sense if its passed a single value for \( \rho \), while with lkexp we could pass a whole vector of rhos, rseq, in order to plot the likelihood.  If one passed a vector of rhos to lkexp2 then dexp would be applied to a vector of rhos and a vector of data simultaneously and by default R will compute the likelihood of the first data point given the first \( \rho \), the second data point given the second \( \rho \), etc. which is NOT what we&#39;re looking for. Fortunately R has a simple function &ndash; sapply &ndash; that allows you to apply a function to each value in a vector, which IS what we want.</p>
+
+<pre><code class="r">llk2 &lt;- sapply(rseq,lkexp2)
+</code></pre>
+
+<p>We can make some simple plots to confirm that the two variants of the likelihood function do indeed give the same answer</p>
+
+<pre><code class="r">plot(rseq,lkexp(rseq),main=&quot;Log Likelihood&quot;,xlab=&quot;rho&quot;,ylab=&quot;-log(L)&quot;)
+lines(rseq,llk2,col=2)
+abline(v=rho_mle,lty=2)
+abline(h=lkexp(rho_mle),lty=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAilBMVEX9/v0AAAAAADkAAGUAOTkAOY8AZrU5AAA5ADk5AGU5OQA5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlOY9lZgBlZrVltbVltf2POQCPOTmPOWWPjzmPtY+P29qP2/21ZgC1ZmW124+1/rW1/v3ajzna24/a/v39tWX924/9/rX9/tr9/v3/AADTPXecAAAALnRSTlP//////////////////////////////////////////////////////////wD/PKlhqgAAAAlwSFlzAAALEgAACxIB0t1+/AAAEyhJREFUeJztnYt627gRRpfexup2k8q724u1aWPvxY1kMe//ehUI6k6CBDEA5vKffq3T0AIUHmEwQ1LAdy0wyXe13wCoA8QbBeKNAvFGgXijQLxRIN4oEG8UiDcKxBsF4o0C8UaBeKNAvFEg3igQbxSINwrEGwXijQLxRoF4o0C8USDeKBBvFIg3ilLxu9WHr9NH35++/9P99+rg8S/3m5sDN7w/hbpgj2nxjkHx7ifES+Ss9q1pmnXrPDbf/9G7uh3xh2PP/jefr0b876umk39s47Kx5t8Qz5CT+NfG8dipav6yGhb/5oT731xffhr8S09tXDfWNBDPj91J8cPLQeXDy251GLtvzaD431fr/u9ceL8Qv+7+9qKNocaEolz81g3Ug6Pn7g/vg6H+4W9uwG+7Qdw8vJzFd5o/fL1u464xoUD800H3YQAPiD/8LcQLIyrUH+b49TkruBOPUC+I3apP1UaSO3/06Lir4F77hO1OPJI7QZzEnyqwQ0i/KOeuxR/i/NprPRy/Fz9czv0doV4MW9mDlBQr4rscrh+3oLUj3mftj7XfBR/MiAfXQLxRIN4oEG8UiDcKxBsF4o0C8UaBeKNAvFEg3igQbxSINwrEGwXijTItvn9OKfx9IiCNSfH7zXP3c4unllQxKf795z+vfgIdYMQbZXqO7x9TxByvi5SsvgGcySg+4bX8utFGsvjxcg7iOZMqPpDcQTxnUsUPlHMzZxFQFfkjHiwieY4fL+cgnjPI6o0C8UaBeKNAvFGSy7mnvna7z+4gnhO35XXyiN9vxpaRgBFGNO2NkPRQ//7Ty3hfgAlN+41afKAvwIWm+UY+4sc7S3gt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" alt="plot of chunk unnamed-chunk-11"/> </p>
+
+<pre><code class="r">plot(rseq,exp(-lkexp(rseq)),main=&quot;Likelihood&quot;,xlab=&quot;rho&quot;,ylab=&quot;L&quot;)
+lines(rseq,exp(-llk2),col=2)
+abline(v=rho_mle,lty=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-11"/> </p>
+
+<p>If we are dealing with a likelihood function that doesn&#39;t have an analytical solution, we can also approximate the solution using numerical optimization algorithms.  Fortunately, R has a number of such algorithms already built in.  One of these is optimize.</p>
+
+<pre><code class="r">## numerical optimization
+fit &lt;- optimize(lkexp,lower=0.01,upper=0.5,maximum=F)
+fit
+</code></pre>
+
+<pre><code>## $minimum
+## [1] 0.09901
+## 
+## $objective
+## [1] 66.25
+</code></pre>
+
+<p>Here the first argument of the optimize function is the function we want to optimize.  The next two specify the lower and upper bounds for the region we want to search.  The final argument specifies that we&#39;re looking for the minimum rather than the maximum  remember that minimizing the negative log likelihood is equivalent to maximizing the likelihood.  The optimize function returns two values: the minimum, which is the rho that minimizes the function, and the objective which is the value of the function at its minimum.  Since for this problem we know the analytical solution we can then compare the exact solution with the numerical approximation</p>
+
+<pre><code class="r">fit$minimum - rho_mle
+</code></pre>
+
+<pre><code>## [1] 1.257e-06
+</code></pre>
+
+<pre><code class="r">plot(rseq,exp(-lkexp(rseq)),main=&quot;Likelihood&quot;,xlab=&quot;rho&quot;,ylab=&quot;L&quot;)
+lines(rseq,exp(-llk2),col=2)
+abline(v=rho_mle,lty=2)
+abline(v=fit$minimum,lty=2,col=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAe1BMVEX9/v0AAAAAADkAAGUAOTkAOY8AZrU5AAA5ADk5AGU5OQA5OWU5OY85ZrU5j485j9plAABlADllAGVlOQBlZgBltbVltf2POQCPOTmPOWWPtY+P29qP2/21ZgC124+1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v3/AADNpaLIAAAAKXRSTlP///////////////////////////////////////////////////8A/+zSMngAAAAJcEhZcwAACxIAAAsSAdLdfvwAABASSURBVHic7Z0Je9pIEkBHztie7HgWx7NrMhs7JuYQ//8XriTAlkBHn6Kr6718DvigG/TorupD4rcSVPLbtZ8AXAfEKwXxSkG8UhCvFMQrBfFKQbxSEK8UxCsF8UpBvFIQrxTEKwXxSkG8UhCvFMQrBfFKQbxSEK8UxCsF8UpBvFIQrxQd4jf3t+/17fbxy1v91fnl6Ye75dkvztg+HgrJA13ia3rF17eIz4/zFr9bFs9luSqK+qbV4n/eF438+jeLsnWnekDxX8SL41z8qhb+WhSN1ta7oebu9JvWneOvEC+NM/E/7xfHn9Xde0v8ovnp5v7mpfrTm5fWnaojWCFeHF3xN/+qG/y6acTFzcun+Ebz7fu6buyV5+fuHWK8PLriK91VA+4RX/0U8VlxGeMXn5n+hXi6+mzY3B8SuZPjZgT3ekzYLsST3GXDufiqn18ctFYuL8X3D+f+TVcP8kG8UhCvFMQrBfFKQbxSEK8UxCsF8UpBvFIQrxTEKwXxSkG8UhCvFMQrBfFKQbxSEK8UxCsF8UpBvFIQrxQf8cU87GeqJzciivd4rAX7earJDcQrBfFKkS8enEC8UhCvFPniifFOIF4piFcK4pUiXXxRIN4J4eKLZklghoqyQ7z4ffWFeXtki6/X5vZ72rwDosVXNexr9bR5e4SLrzr6fZ3fId6WHMSXiLdHtPiqo2+sM6SzR7L4g/DTF1ghWHyri9+T19uShXiivD2IV4pg8ccOfo94F0SL//i/HtOBFXmIJ623JhPxmLdFrvhT975vfwOmiBXfSejI7qxBvFIQrxSx4onxfviLP3zq3rN10b7su7ek9XZ4i3+tP2n9uXy9sy3aF8R74St++/RWlpuH9+bW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" alt="plot of chunk unnamed-chunk-13"/> </p>
+
+<p>An alternative optimization function in R is nlm (nonlinear minimization).  The arguments for nlm are slightly different from optimize, the first still being the function to optimize but the second being a vector of the initial conditions the same length as the number of dimensions  the initial best guess of the parameters is used as the starting place for the optimization.</p>
+
+<pre><code class="r">fit2 &lt;- nlm(lkexp,0.03)
+fit2
+</code></pre>
+
+<pre><code>## $minimum
+## [1] 66.25
+## 
+## $estimate
+## [1] 0.09901
+## 
+## $gradient
+## [1] -1.789e-07
+## 
+## $code
+## [1] 1
+## 
+## $iterations
+## [1] 9
+</code></pre>
+
+<p>The output from nlm is mostly the same as for optimize but it includes a few other pieces of information.  The gradient is the numerical estimate of the slope at the numerical optimum (remember that at the optimum the slope should be zero).  The code indicates under what conditions the algorithm stopped.  Generally a 1 or 2 indicates that nlm is confident that it found a minimum, while values of 3-5 indicate failure for some reason.  Finally iterations reports the number of loops the algorithm performed in finding the solution.
+  An important difference between nlm and optimize is that optimize is designed to work for 1-D problems (i.e. models with one parameter), while nlm will work on multi-parameter models.  In the second case study we will also introduce a third optimization function, optim that also works with multivariate problems.  Most of the time it doesn&#39;t matter which optimization routine you use, though they each work slightly differently, so if one approach fails it can be useful to check another.
+    As discussed in lecture, remember that all numerical optimization algorithms can get stuck in local minima.  For this reason it is good practice to run such routines multiple times starting from multiple different initial locations to ensure they are all converging to the same point.  Obviously this does not guarantee that they are not all converging to the same local minima but it does reduce the risk, especially if the initial conditions are well distributed in parameter space rather than being too close together.  Different search methods have different sensitivities to local minima so if you suspect this is a problem you&#39;ll want to look up different methods and choose your algorithm carefully.  Finally, numerical methods can also run into trouble if the surface is not smooth and continuous (fortunately most likelihoods meet these criteria).</p>
+
+<h3>Lab Questions</h3>
+
+<pre><code>1) Include code to make a plot of the exponential PDF (with the MLE parameter estimate) on top of the histogram of the data.
+</code></pre>
+
+<h2>Case Study 2: Change in Fire Risk With Time</h2>
+
+<p>Fire ecologists summarize information on the distribution of intervals between fires as basis for inference on how the probability of fire might change with time since the last fire.  Here we will be using observations of fire intervals in Itasca State Park in northwestern Minnesota taken from fire scars on red pine trees that were aged using tree rings (Clark 1990).  Fire return interval are frequently analyzed using a Weibull distribution:</p>
+
+<p>\[ f(x \vert c, \lambda) = \left({{c}\over{\lambda}}\right)\left( {x \over \lambda} \right)^{c-1} exp\left( -\left( {x\over \lambda} \right)^c \right) \]</p>
+
+<p>The Weibull is a generalization of the Exponential where the rate parameter either increases or decreases with time according to the parameter c.  You can see in the above PDF that when c=1 we recover the functional form for the Exponential.  In R the parameter c is called the shape while the parameter \( \lambda \) is referred to as the scale.</p>
+
+<pre><code class="r">age = 0:160
+plot(age,dweibull(age,1,50),type=&#39;l&#39;,ylab=&quot;density&quot;,ylim=c(0,0.025)) 
+lines(age,dweibull(age,2,50),col=&quot;red&quot;) 
+lines(age,dweibull(age,.5,50),col=&quot;green&quot;) 
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAeFBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrUA/wA5AAA5ADk5AGU5OY85ZrU5j9plAABlADllAGVlOQBlOTlltf2POQCPOTmPOWWPtY+P29qP2/21ZgC1/rW1/v3ajzna/rXa/v39tWX924/9/rX9/tr9/v3/AAAVWr2hAAAAKHRSTlP//////////////////////////////////////////////////wD/AIw85wAAAAlwSFlzAAALEgAACxIB0t1+/AAAD+1JREFUeJzt3Qtb48YVgOGYJimkSyBpIdtAQ8BY/v//sEi+SdZtLmfmjHS+72m7T5dFQnoZeSTb8g8VmewH7R+AdALeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRpuF//z9r+rzcbP5+T3Hj0O5coGv7avtr70vbca6G/0K5Ssefnv/fhj51/Bj33M3t1BKXzT8482f3+sRf9871gNfcrHwVbV73txWH//oDXjgiy4e3n/RwBcQ8EaLht/+srl5YXK3uGLhd89PX/99AH5pCZzOff3v6y3wC0tixH/19uM34BdV9GP85+ND/cdb/3wO+JJjVm804I0mcTpX1zrSzz4NAHwBCU3uqo/+87LAl5zM6RwXcBaXxohHvoAETueuH+PnFw28fhqzeuALCHijScH7TO6ALyBGvNGAN1qCK3fziwZeP87jjaZx5Q74AmLEG40rd0ZjVm804I0GvNGAN5oKPPL6AW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW80HXjk1QPeaMAbDXijAW804I0GvNGANxrwRgPeaMAbDXijAW804I0GvNGANxrwRgPeaCo3Ma6QV0/llqYV8Oqp3MS4Al49RrzRVG5iXAGvntKsHnjtgDeaxOnczQuTu8UlMbnbPT8Av7RkTudeb4FfWEKnc28/fgN+UQmczj3Uf7z1z+eALzlm9UbT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" alt="plot of chunk unnamed-chunk-15"/> </p>
+
+<h3>Lab Questions</h3>
+
+<pre><code>2) Does increasing the shape parameter cause fire risk to increase or decrease with age?
+3) Extra Credit: Plot the CDF of these 3 distributions. What is significant about the scale parameter? What is the analytical solution for the CDF at this point? Add these lines to your CDF plot.
+</code></pre>
+
+<p>Lets begin by loading up the data set and take a quick look at it.  The data are actually stored as the number of times each return interval was observed, so our first step is to use rep to reconstruct the observations</p>
+
+<pre><code class="r">### Fire scar example
+fireintervals &lt;- read.table(&quot;data/firescar.txt&quot;,header=TRUE)
+firedata &lt;- rep(fireintervals[,1],fireintervals[,2])
+hist(firedata,nclass=max(firedata),xlab=&quot;Years&quot;,main=&quot;Fire Return Interval&quot;)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAh1BMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZrU5AAA5ADk5AGU5OQA5OWU5OY85ZrU5j9plAABlADllAGVlOQBlZjlltbVltf2POQCPOTmPOWWPjzmPj2WPtY+P29qP2/21ZgC1tWW1/v3ajznatWXa24/a/rXa/tra/v39tWX924/9/rX9/tr9/v2vCazTAAAALXRSTlP//////////////////////////////////////////////////////////wCl7wv9AAAACXBIWXMAAAsSAAALEgHS3X78AAALQklEQVR4nO3dC3fixgFA4cjbGnfbLWzSQtImJqZNzev//75qRhIW5qHBxsKje2/O8W6ExCz7WQ+zSPpha8h+uPUfwG6T8NCEhyY8NOGhCQ9NeGjCQxMemvDQhIcmPDThoQkPTXhowkMTHprw0ISHJjw04aEJD014aMJDEx7aMOA3syI2XU++PB15fD2JD+8/Np+efc5XT9Ux95ElPncDgz/xeA1f3D+/TJufnLtZps3YNffhEp+8ocDXf+Xh734zu/tHcfe4Xbx8J1Qk1ddqcvxWGcXl1pP752qZ32Zfft9tF6qnqiZUczfLbqu5/xqmlN8Ro+2ynFwOKHzvvYKP6/Y8ruPj3eT6az35AD4s879qwzHaf6o4X5zcPGU193/CBmQ9uXustif3z8L3XgPUaJV0q4eSpfmGaDb1o9bkeVzvX+BH8WnG5epb7RDqp6onhLl3yzZzl2t5e27he+8VfAkSN7/VFni7g5+2J7+CDzPGr+F/q2Xqp4oTwty7Zau5yw3/uN73h+cX/ga93scfwgeWsN3vgK//9+WpmgnH4MsH/gjWq4fqRwbhe+8IfNwuN61rn2lrcgVfflkUifC7ZWv47fzu3+GbKaz5qwfhb9AR+PpI7AUxAO0O7iLl7nAtCf5g7vDNVbxsXIS/QcfgI1O9ilYk1TFZM7lUCwfiRfHPlE19nLtZthkh/ixXjTRenHz36HM2DHi7OOGhCQ9NeGjCQxMemvDQhIcmPDThoQkPTXhowkMTHprw0ISHJjw04aEJD014aMJDEx6a8NCEhyY8NOGhCQ9NeGjCQxMemvDQhIcmPDThoXXCryfjPv4c1nPd8D/+K+EyrpZbCfDh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" alt="plot of chunk unnamed-chunk-16"/> </p>
+
+<pre><code class="r">summary(firedata)
+</code></pre>
+
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##     2.0     9.0    16.0    26.1    36.8   164.0
+</code></pre>
+
+<p>Since the Weibull is a complex two-parameter model we&#39;ll be solving for the MLE numerically rather than trying to find an analytical solution.  As in the previous example, we do this by defining the negative log likelihood function that we want R to minimize.</p>
+
+<pre><code class="r">## define Weibull negative log likelihood
+wlik &lt;- function(param){
+ -sum(dweibull(firedata, param[1], param[2], log = TRUE))
+}
+</code></pre>
+
+<h3>Lab Questions</h3>
+
+<pre><code>4) Since the exponential is a special case of the Weibull, use the code from the first case study to solve for the exponential MLE (rho_mle) for the fire scar data 
+</code></pre>
+
+<p>Next we&#39;ll specify the initial conditions for the numerical optimization  it doesn&#39;t matter what values you actually start from provided they are reasonable since they are just our first guess, though the closer you are to the correct value the less likely you are to end up in a local minima and the faster the algorithm will find the minima.  Below we start with the MLE for the Exponential special case.</p>
+
+<pre><code class="r">param0 &lt;- c(1.0,1/rho_mle)      ##initial condition for numerical optimization
+wlik(param0)
+</code></pre>
+
+<pre><code>## [1] 401.3
+</code></pre>
+
+<p>As in the first example, we will call upon one of R&#39;s built in optimization functions to search parameter space and find the combination of parameters that has the lowest negative log likelihood.</p>
+
+<pre><code class="r">out &lt;- optim(param0,wlik,lower=c(0.01,0.01), upper=c(100,100),method=&quot;L-BFGS-B&quot;)
+out
+</code></pre>
+
+<pre><code>## $par
+## [1]  1.189 27.801
+## 
+## $value
+## [1] 347.4
+## 
+## $counts
+## function gradient 
+##       13       13 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## [1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;
+</code></pre>
+
+<p>Next, we can visually check whether we chose an appropriate probability distribution by comparing it to the data</p>
+
+<pre><code class="r">hist(firedata,probability=TRUE,nclass=max(firedata))
+lines(age,dweibull(age,out$par[1],out$par[2]),col=2)
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAAhFBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZo8AZrU5AAA5ADk5AGU5OWU5OY85ZmU5j485j9plAABlADllAGVlOQBlZjlltbVltf2POQCPOTmPOWWPtY+P27WP2/21ZgC1/rW1/v3ajzna24/a/rXa/tra/v39tWX924/9/rX9/tr9/v3/AACEcTLkAAAALHRSTlP///////////////////////////////////////////////////////8A/3nwG3MAAAAJcEhZcwAACxIAAAsSAdLdfvwAAA6BSURBVHic7d0Le6LYAYfxPcl2GjudNpnZ1kxb3dhtvMD3/37lwAFBUFARzjn/93322RgHQfOTqxd+SUiyX+a+AzRPwIsGvGjAiwa8aMCLBrxowIsGvGjAiwa8aMCLBrxowIsGvGjAiwa8aMCLBrxowIsGvGjAiwa8aMCLBrxowcPv354/kuTw/vxRXCpbL+8Y6W5hnlblhf80xluf8pfPkaY3QxHBN65em3sgqltfGk0D/r7pzVBE8PmlbBY1zx+Hd2PMS5Jssh+vif1n8/x75nR4f/pHNi9vs6uzOXpr/pxd/5ENVKIVw+e3tqjFhT/e7AjzG+YDLIsRmn9a+GJUbnpuvEEUGfz+zVir/xUQa/tL9jN3+XVh4QvJfKDPrSlziws3fCd8flUxgHtq2Csa03O/fPbcYz+KAL60s/C7hfu720XvbpHNfvu3p9VukcluTA7/Ut7s+WNr7A3M0g5ir6uGby7q9wX8ix0gG7t9jlUjLEdV3WJ/ZoPAuyKDz3+zf3oLsc2VN2aZX9gXi/pVeSML/+JUi2ur4bvg7SBuEWHXFS/lOr4YlbuF+yWEIoBvreONm2fPwefDVPDHp8MN8OWo3BKmttrwvdjgbWtH17Wot36bbC1trzqFv7ioL54xbkVSjbAcVT5g9UsIRQZfmwO7N+6OM24bvhr+HLwbwG0kHrcP3fSqX0IoMvh8cesW59ncWe7OZevecnfO+b26NUADvhr+HHwuX27v/92u492oiumVv4RQ8PCD24ayozVNEvBuy/917vvhUxLwxVr9Ze574VUa8NQKeNGAFw140YAXDXjRgBcNeNGAFw140YAXDXjRgBcNeNGAFw140YAXDXjR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" alt="plot of chunk unnamed-chunk-20"/> </p>
+
+<p>Since the Weibull model has two parameters we&#39;ll want to look at the likelihood as a surface rather than just as a one dimensional likelihood profile to see how the estimates of the parameters are related to each other.  To do this we&#39;ll define a sequence of values for both parameters that range from 20% to 200% of the MLEs.  We&#39;ll then evaluate the likelihood across all combinations of both parameters, using a loop within a loop, and store the values in a matrix, z.</p>
+
+<pre><code class="r">nstep &lt;- 40  
+z &lt;- matrix(NA,nrow=nstep,ncol=nstep)       ## matrix to store results
+rp &lt;- seq(0.2,2,length=nstep)               ## sequence from 20%-200%
+for(i in 1:nstep){                  ## loop over the first dimension
+  c &lt;- rp[i]*out$par[1]     #c value
+  for(j in 1:nstep){
+    lambda &lt;- rp[j]*out$par[2]      #lamba values
+    z[i,j] &lt;- wlik(c(c,lambda))
+  }
+}
+</code></pre>
+
+<p>We then use the R function contour to make a contour plot of the two dimensional likelihood surface.    Contour plots are read the same way that topo maps are, though in this case we&#39;re looking at the hills and valleys of the likelihood surface.</p>
+
+<pre><code class="r">contour(rp*out$par[1],rp*out$par[2],z,levels=c(350,360,370,380)
+    ,xlab=&quot;C&quot;,ylab=&quot;Lambda&quot;)
+## add the  MLE&#39;s
+abline(v=out$par[1],lty=2)
+abline(h=out$par[2],lty=2)
+points(1,1/rho_mle,col=2)       ## MLE for exponential special case
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-22"/> </p>
+
+<p>If the two variables are uncorrelated then contour plot will show ellipses that are perfectly round and oriented either up and down or side to side but not on a diagonal.  From this contour plot we see that there are some mild correlation between the two parameters.</p>
+
+<h2>Case study 3: Binomial/Exponential Mortality</h2>
+
+<p>In the first example of plant mortality, the data consist of the ages at which different individuals died, presumably obtained by the aforementioned industrious graduate student censusing the population every day until every individual was dead.  Supposed instead that this student&#39;s advisor, who clearly doesn&#39;t go into the field every single day, decides instead to only census the population on day 20.  The advisor would have observed the following data instead, where 0 is a dead plant and 1 is a live plant:</p>
+
+<pre><code class="r">surv = c(0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0)
+n = length(surv)
+y = sum(surv)
+</code></pre>
+
+<p>We again want to estimate the per-capita daily mortality rate, \( \rho \), but this time we will instead use the combined binomal/exponential model covered in Section 3.4 of the text.</p>
+
+<p>As a reminder we start with the binomial model expressed in terms of q, the probability of surviving to the census at day 20</p>
+
+<p>\[ L = Binom(y \vert N, \theta) \propto \theta^y (1-\theta)^{N-y} \]</p>
+
+<p>and then substitute in the exponential model for the probability of surviving to a given time t, exp(-rt), where we&#39;re interested in survival to the census at time T = 20.</p>
+
+<p>\[ L = Binom(y \vert N, \rho) \propto e^{-\rho T y} \left( 1-e^{-\rho T} \right)^{N-y} \]</p>
+
+<p>Apply one of the <strong>numerical methods</strong> you used above in order to estimate \( \rho \).</p>
+
+<h2>Lab Questions</h2>
+
+<pre><code>5) Please include the following in your answer:
+*  R code
+*  Numerical estimate of rho
+*  Negative log likelihood profile
+*  Answer the following question:  If we wanted to test the assumption that mortality rate was constant in time, which of the two data sets could we use and what model would we fit?
+6) Extra Credit: A plot of the exponential PDF with two curves, one based on the Exponential model from the start of this lab and the second from the Binomial/Exponential fit you just found 
+</code></pre>
+
+</body>
+
+</html>
+
