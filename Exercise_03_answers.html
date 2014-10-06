@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -36,6 +37,8 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
    }, 0);
 }
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 <!-- saved from url=(0014)about:internet -->
 <html>
 <head>
@@ -213,6 +216,9 @@ hljs.initHighlightingOnLoad();
 
 <!-- MathJax scripts -->
 <script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
 </script>
 
@@ -221,6 +227,7 @@ hljs.initHighlightingOnLoad();
 </head>
 
 <body>
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 <style type="text/css">
@@ -247,6 +254,8 @@ hljs.initHighlightingOnLoad();
 <p>First, let’s load up the data set of the lifespan of individuals and take a quick look at the data.</p>
 <pre class="r"><code>## vector of survival times (days)
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 <h2>Case study 1: Survival Analysis</h2>
 
 <p>Consider the example presented in lecture and in Section 3.2 of the book where the survival of a population of plants is being followed by an industrious graduate student conducting a drought experiment.  The goal of this analysis is to estimate the mortality rate, \( \rho \).  The data records the day that each plant died, which has to be positive, and if we assume a constant mortality rate then the underlying process should conform to an exponential distribution:</p>
@@ -256,6 +265,9 @@ hljs.initHighlightingOnLoad();
 <p>First, let&#39;s load up the data set of the lifespan of individuals and take a quick look at the data.</p>
 
 <pre><code class="r">## vector of survival times (days)
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
 dat &lt;- c(1,9,9,5,27,9,29,1,11,3,3,11,13,6,11,2,4,1,37,10)
 n &lt;- length(dat)
@@ -272,6 +284,7 @@ lkexp &lt;- function(rho, dat){
   n = length(dat)
   -n*log(rho) + rho*sum(dat)
 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 # lkexp(rho_mle) # Same result as above</code></pre>
 <p>As you can see, when we pass the MLE for <span class="math">\(\rho\)</span> to the function we just defined it returns the same value as when we calculated the likelihood explicitly. The R syntax for defining a function involves assigning it a name (<code>lkexp &lt;- function</code>), specifying what the function’s parameters are ( <code>function(rho)</code> ), and specifying what the function computes ( everything between the { … } ). We now use this function to plot the likelihood in both the -log and linear domains as a function of the parameter <span class="math">\(\rho\)</span>, adding a vertical line to indicate the value of <span class="math">\(\rho\)</span> where the MLE is and a horizontal line that shows the value of the likelihood function at the MLE.</p>
@@ -359,6 +372,8 @@ wlik(param0)</code></pre>
 <pre class="r"><code>out &lt;- optim(param0,wlik,lower=c(0.01,0.01), upper=c(100,100),method=&quot;L-BFGS-B&quot;)
 out</code></pre>
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 # lkexp(rho_mle) # Same result as above
 </code></pre>
 
@@ -498,6 +513,9 @@ wlik(param0)
 out
 </code></pre>
 
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
 <pre><code>## $par
 ## [1]  1.189 27.801
@@ -514,6 +532,7 @@ out
 ## 
 ## $message
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## [1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;</code></pre>
 <p>Next, we can visually check whether we chose an appropriate probability distribution by comparing it to the data</p>
 <pre class="r"><code>hist(firedata,probability=TRUE,nclass=max(firedata))
@@ -522,6 +541,8 @@ lines(age,dweibull(age,out$par[1],out$par[2]),col=2)</code></pre>
 <p>Since the Weibull model has two parameters we’ll want to look at the likelihood as a surface rather than just as a one dimensional likelihood profile to see how the estimates of the parameters are related to each other. To do this we’ll define a sequence of values for both parameters that range from 20% to 200% of the MLEs. We’ll then evaluate the likelihood across all combinations of both parameters, using a loop within a loop, and store the values in a matrix, z.</p>
 <pre class="r"><code>nstep &lt;- 40  
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 ## [1] &quot;CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH&quot;
 </code></pre>
 
@@ -536,6 +557,9 @@ lines(age,dweibull(age,out$par[1],out$par[2]),col=2)
 <p>Since the Weibull model has two parameters we&#39;ll want to look at the likelihood as a surface rather than just as a one dimensional likelihood profile to see how the estimates of the parameters are related to each other.  To do this we&#39;ll define a sequence of values for both parameters that range from 20% to 200% of the MLEs.  We&#39;ll then evaluate the likelihood across all combinations of both parameters, using a loop within a loop, and store the values in a matrix, z.</p>
 
 <pre><code class="r">nstep &lt;- 40  
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
 z &lt;- matrix(NA,nrow=nstep,ncol=nstep)       ## matrix to store results
 rp &lt;- seq(0.2,2,length=nstep)               ## sequence from 20%-200%
@@ -545,6 +569,7 @@ for(i in 1:nstep){                  ## loop over the first dimension
     lambda &lt;- rp[j]*out$par[2]      #lamba values
     z[i,j] &lt;- wlik(c(c,lambda))
   }
+<<<<<<< HEAD
 <<<<<<< HEAD
 }</code></pre>
 <p>We then use the R function âcontourâ to make a contour plot of the two dimensional likelihood surface. Contour plots are read the same way that topo maps are, though in this case we’re looking at the hills and valleys of the likelihood surface.</p>
@@ -577,6 +602,8 @@ y = sum(surv)</code></pre>
 <p><strong>A:</strong></p>
 <pre class="r"><code>lkbinomexp &lt;- function(rho, N, t_survey, y){  
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 }
 </code></pre>
 
@@ -629,11 +656,15 @@ y = sum(surv)
 <p><strong>A:</strong></p>
 
 <pre><code class="r">lkbinomexp &lt;- function(rho, N, t_survey, y){  
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
   return(rho*t_survey*y - (N-y)*(log(1-exp(-rho*t_survey))))
 }
 
 opt &lt;- optimize(lkbinomexp, lower=0.001,upper=1,maximum=F, N = n, y=y, t_survey=20)
+<<<<<<< HEAD
 <<<<<<< HEAD
 opt$minimum</code></pre>
 <pre><code>## [1] 0.09487</code></pre>
@@ -681,6 +712,8 @@ $(document).ready(function () {
 </body>
 </html>
 =======
+=======
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
 opt$minimum
 </code></pre>
 
@@ -718,4 +751,7 @@ legend(25, 0.1, paste(&quot;Rho&quot;, round(c(rho_mle, opt$minimum),5)),
 
 </html>
 
+<<<<<<< HEAD
+>>>>>>> a246089654e250504067811b147abaf0dd9af037
+=======
 >>>>>>> a246089654e250504067811b147abaf0dd9af037
