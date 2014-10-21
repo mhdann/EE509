@@ -1,6 +1,6 @@
 ---
 title: "Lab 06 - MCMC"
-author: "GE 509"
+author: "GE509"
 date: "October 14, 2014"
 output: html_document
 ---
@@ -134,7 +134,7 @@ for(g in 1:ngibbs){
 <<insert normal here >>
 
   ## sample variance
-<< insert inverse gamma here >>
+<<insert inverse gamma here >>
 
   ## storage
   bgibbs[g,] <- b  ## store the current value of beta vector
