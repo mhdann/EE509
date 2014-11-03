@@ -392,8 +392,8 @@ Suppose a review of the scientific literature reveals that 95% of the reported v
 
 ```{r}
 # new prior
-new_bprior <- c(0,1)
-new_vinvert <- solve(diag(c(1000,0.25)))
+new_bprior <- c(0,1) # should be (0,2)
+new_vinvert <- solve(diag(c(1000,0.25))) # Should be 0.25^2 (since 0.25 is SD implied by 1.5-2.5)
 
 # Create the data object
   d <-gen_data(5, beta, sigma2)

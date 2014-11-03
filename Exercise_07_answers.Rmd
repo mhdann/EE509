@@ -1,0 +1,394 @@
+---
+title: "Lab 07 - Growth Curve"
+author: "Michael Dann"
+date: "October 29, 2014"
+output: html_document
+---
+
+
+## Task 1: Load in the data, plot, & guess initial conditions
+```{r}
+
+# Load lab7 data and coerce to lab6 format
+load("data/Lab7.RData")
+library(mvtnorm)
+# need an x (L), y (grow), per lab6
+# assigned as list elements to "data"
+
+data <- list(L=L, grow=grow)
+d <- data # copy for part 2
+
+## initial condition guesses
+beta  = c(-40,80)
+sg    = 1000
+theta = 0.03
+zfunc <- function(x,theta){
+  return(x/(x+theta))
+}
+fproc <- function(x,beta, theta){
+  if(is.null(dim(beta))){
+    y = beta[1]+beta[2]*zfunc(x,theta)  
+  } else {
+    y = beta[,1]+beta[,2]*zfunc(x,theta)
+  }
+  return(y)
+}
+Lseq <- seq(min(data$L),max(data$L),length.out = 200)
+
+# visual check
+plot(x=data$L,y=data$grow)
+lines(Lseq, fproc(Lseq, beta, theta), col=2)
+
+```
+
+
+```{r}
+## specify priors
+append_priors <- function(data, bprior, vinvert,s1,s2,a1,a2){
+  # Priors for beta coefs
+  data$bprior <-bprior
+  data$vinvert <-vinvert
+  
+  # sigma priors
+  data$s1 <- s1
+  data$s2 <- s2
+
+  # Beta distro priors for theta
+  data$a1 <- a1
+  data$a2 <- a2
+  
+  return(data)
+}
+bprior <- as.vector(c(0,0))
+vinvert <- solve(diag(1000,2))
+s1 <- 0.1
+s2 <- 0.1
+a1 <- 1.91
+a2 <- 10.17
+data <- append_priors(data, bprior, vinvert, s1, s2, a1, a2)
+
+##precompute frequently used quantities
+precompute <-function(data, sg, theta){
+  data$Vb = data$vinvert %*% data$bprior
+  data$sinv <- 1/sg
+  data$n <- length(data$L)
+  data$z = zfunc(data$L, theta)
+  data$X <- cbind(rep(1,data$n),data$z)
+  data$theta <- theta
+  return(data)
+}
+data <- precompute(data, sg, theta)
+```
+
+
+## MCMC loop
+
+The core of this analysis is the main loop of the MCMC where we will iteratively draw from the posterior distribution for the regression parameters conditioned on the variance and the variance conditioned on the regression parameters.  All of this occurs within a large loop that counts the number of iterations and stores the current value of the parameter values.  We'll begin with  the R code for the overall structure of the MCMC and then fill in the details for each sampler
+
+
+
+```{r}
+##load libraries
+library(coda)
+library(mvtnorm)
+  dtnorm <- function(x,mu,sd){
+    # jump distro
+    y = dnorm(x,mu,sd,log=TRUE)-log(pnorm(1,mu,sd)-pnorm(0,mu,sd))
+    y[x<0 | x > 1] = -Inf
+    return(y)
+  }
+  
+  # Plot test
+  xseq = seq(-0.5,1,length=100)
+  plot(xseq,exp(dtnorm(xseq,0.25,0.3)),type='l')
+  lines(xseq,dnorm(xseq,0.25,0.3),col=2)
+
+gibbs <- function(data, runs=1000, JumpSD){
+  data$ngibbs <- runs  ## number of updates
+  data$bgibbs <- matrix(beta,nrow=data$ngibbs,ncol=2, byrow = T) 	## storage for beta
+  data$vgibbs <- rep(sg, data$ngibbs)			## storage for sigma2
+  data$tgibbs <- rep(theta,data$ngibbs)  		## storage for theta
+
+  
+  rtnorm <- function(n,mu,sd){
+    x <- rnorm(n,mu,sd)
+    sel <- which(x < 0 | x > 1)
+    while(length(sel)> 0){
+      x[sel] <- rnorm(length(sel),mu,sd)
+      sel <- which(x < 0 | x > 1)
+    }
+    return(x)
+  }
+## Gibbs loop
+  for(g in 1:data$ngibbs){
+  
+    bigV    <- solve(data$sinv*crossprod(data$X) + data$vinvert)
+    littlev <- data$sinv*crossprod(data$X,data$grow) + data$Vb
+    b <- t(rmvnorm(1,bigV %*% littlev,bigV))
+    
+    ## sample variance
+    u1 <- data$s1 + data$n/2
+    u2 <- data$s2 + 0.5*crossprod(data$grow-data$X%*%b)
+    data$sinv <- rgamma(1,u1,u2)
+    sg <- 1/data$sinv
+
+    # Sample for theta
+    tnew <- rtnorm(1,data$theta,JumpSD)        ##propose new theta
+    znew <- data$L/(data$L+tnew)                    ## calculate new z
+    Xnew <- cbind(rep(1,data$n),znew)              ## calculate new X
+    anum <- dmvnorm(data$grow,Xnew%*%b,diag(sg,data$n),log=TRUE) +  ##likelihood
+              dbeta(tnew,data$a1,data$a2,log=TRUE)          ##prior
+    jnum <- dtnorm(tnew,data$theta,JumpSD)             ##jump
+    aden <- dmvnorm(data$grow,data$X%*%b,diag(sg,data$n),log=TRUE) + ##likelihood
+                dbeta(data$theta,data$a1,data$a2,log=TRUE)           ##prior
+    jden <- dtnorm(data$theta,tnew,JumpSD)             ##jump
+    a <- exp((anum-jnum)-(aden-jden))         ## acceptance criteria
+    if(a > runif(1)){                 ## accept with probability a
+      data$theta <- tnew                       ## update theta if step accepted
+      data$X <- Xnew                       ## update X if step accepted
+    }
+        
+    ## storage
+    data$bgibbs[g,] <- b  ## store the current value of beta vector
+    data$vgibbs[g]  <- sg  ## store the current value of the variance  
+    data$tgibbs[g]  <- data$theta # store the current value of the distribution of theta
+  }  
+  return(data)
+}
+
+
+
+# output <- gibbs(data, runs=1000, JumpSD=0.1)
+# sum(diff(output$tgibbs)==0) # Jump acceptance ~ 15.8% on first run
+# output <- gibbs(data, runs=1000, JumpSD=0.05)
+# sum(diff(output$tgibbs)==0) # acceptance is ~ 27.6%
+# output <- gibbs(data, runs=1000, JumpSD=0.025)
+# sum(diff(output$tgibbs)==0) # acceptance is ~ 35.5%
+# output <- gibbs(data, runs=1000, JumpSD=0.015)
+# sum(diff(output$tgibbs)==0) # acceptance is ~ 45%
+burn_demo <- gibbs(data, runs=10000, JumpSD=0.015)
+```
+
+## Lab Report Task 2
+### Jump Values
+Preliminary runs yielded:
+JumpSD       | Acceptance
+------------ | ------
+0.1          | 15.8%
+0.05         | 27.6%
+0.025        | 35.5%
+0.015        | 45%
+
+
+I ended up using 0.015 for the standard deviation of the jump distribution.
+
+```{r}
+par(mfrow = c(2,2))
+ts.plot(burn_demo$bgibbs[1:1000,1], main="beta0");abline(v=250)
+ts.plot(burn_demo$bgibbs[1:1000,2], main="beta1");abline(v=250)
+ts.plot(burn_demo$vgibbs[1:1000], main="sigma2");abline(v=250)
+ts.plot(burn_demo$tgibbs[1:1000], main="theta");abline(v=250)
+# I chose a burn-in of 250
+beg = 250
+
+par(mfrow = c(2,2))
+autocorr.plot(burn_demo$bgibbs[beg:10000,1], main="beta0", lag.max = 200, auto.layout = F)
+autocorr.plot(burn_demo$bgibbs[beg:10000,2], main="beta1", lag.max = 200, auto.layout = F)
+autocorr.plot(burn_demo$vgibbs[beg:10000], main="sigma2", lag.max = 200, auto.layout = F)
+autocorr.plot(burn_demo$tgibbs[beg:10000], main="theta", lag.max = 200, auto.layout = F)
+
+# I chose to thin out 99 out of every 100th measurement
+thin = 100
+
+sample_points = 5000
+end = sample_points*thin + beg
+
+# This takes a long-time
+output <- gibbs(data, runs=end, JumpSD=0.015)
+```
+
+## Diagnostics of the run
+
+```{r}
+bmcmc <- mcmc(output$bgibbs[seq(beg,end,by=thin),])  ## use beta
+vmcmc <- mcmc(output$vgibbs[seq(beg,end,by=thin)])   # use the variance
+tmcmc <- mcmc(output$tgibbs[seq(beg,end,by=thin)])  # theta
+
+plot(bmcmc)  		## mcmc history and density plot
+title("Beta",outer=T)
+autocorr.plot(bmcmc)		## autocorrelation
+title("Beta",outer=T)
+cumuplot(bmcmc)		## quantile plot
+title("Beta",outer=T)
+
+# Variance plots
+plot(vmcmc)  		        ## mcmc history and density plot
+title("Variance",outer=T)
+autocorr.plot(vmcmc)		## autocorrelation
+title("Variance",outer=T)
+cumuplot(vmcmc)		      ## quantile plot
+title("Variance",outer=T)
+
+# theta plots
+plot(tmcmc)    	        ## mcmc history and density plot
+title("Theta",outer=T)
+autocorr.plot(tmcmc)		## autocorrelation, needs thinning
+title("Theta",outer=T)
+cumuplot(tmcmc)		      ## quantile plot
+title("Theta",outer=T)
+
+# Correlations
+pairs(cbind(b0=bmcmc[,1],b1=bmcmc[,2],var=vmcmc,theta=tmcmc), cex=0.5)
+
+
+# Credible/Prediction Intervals
+credi_predi <- function(data,beg=1, thin=1){
+  ## credible and prediction intervals for the mcmc object
+  subseq <- seq(from=beg,to=data$ngibbs,by=thin)
+  data$xpred <- seq(0,1,length=30)   				      ## sequence of x values we're going to
+  data$npred <- length(data$xpred)				##      make predictions for
+  
+  data$ypred <- matrix(NA,nrow=length(subseq),ncol=data$npred)	## storage for predictive interval
+  data$ycred <- matrix(NA,nrow=length(subseq),ncol=data$npred)	## storage for credible interval
+
+  for(g in 1:data$npred){
+    data$Ey <- fproc(x = data$xpred[g], beta = data$bgibbs[subseq,], theta  = data$tgibbs[subseq])
+    data$ycred[,g] <- data$Ey
+    data$ypred[,g] <- rnorm(length(subseq),data$Ey,sqrt(data$vgibbs[subseq]))  
+  }  
+  data$ci <- apply(data$ycred,2,quantile,c(0.025,0.5,0.975))  ## credible interval and median
+  data$pi <- apply(data$ypred,2,quantile,c(0.025,0.975))		## prediction interval
+  return(data)
+}
+
+plot_stuff <- function(data){  
+  plot(data$L,data$grow,cex=0.5,xlim=c(0,1),ylim=c(-15,60),xlab="L",ylab="grow", main=paste("Sample size", length(data$L)))
+  ord <- order(data$xpred) # To ensure compatibility with unordered sample points
+  lines(data$xpred[ord],data$ci[1,ord],col=3,lty=2)  ## lower CI
+  lines(data$xpred[ord],data$ci[2,ord],col=3,lwd=2)  ## median
+  lines(data$xpred[ord],data$ci[3,ord],col=3,lty=2)  ## upper CI
+  lines(data$xpred[ord],data$pi[1,ord],col=4,lty=2)	## lower PI
+  lines(data$xpred[ord],data$pi[2,ord],col=4,lty=2)	## upper PI  
+  # abline(b0,b1)				## true model  
+  legend("bottomright",legend=c("95% Credible Interval","95% Prediction Interval"),col=c(3,4),lty=c(2,2))
+}
+
+table_stuff<-function(data,thin, beg){
+  # Table it up
+  end = length(data$vgibbs)
+  if(is.null(data$sumB)){
+    sumB <- summary(mcmc(data$bgibbs[seq(from=beg,to=end, by=thin),]))  
+  } else {
+    sumB <- data$sumB
+  }
+  if(is.null(data$sumV)){
+    sumV <- summary(mcmc(data$vgibbs[seq(from=beg,to=end, by=thin)]))
+  }else {
+    sumV <- data$sumV
+  }
+  if(is.null(data$sumT)){
+    sumT <- summary(mcmc(data$tgibbs[seq(from=beg,to=end, by=thin)]))  
+  }else {
+    sumT <- data$sumT
+  }
+  cols_1 <- rbind(sumB[[1]][,1:2], sumV[[1]][1:2],sumT[[1]][1:2])  
+  cols_2 <- rbind(sumB[[2]], sumV[[2]], sumT[[2]])
+  row.names(cols_1) <- NULL
+  row.names(cols_2) <- NULL
+  df <- data.frame(cbind(cols_1,cols_2))
+  names(df)[3:7] <- dimnames(cols_2)[[2]]
+  row.names(df) <- NULL
+  df <- cbind(Var= c("b0","b1","sigma2","theta"), df)
+  df$CI <- df[,"97.5%"]-df[,"2.5%"]  
+  return(df)
+}
+tab1 <- table_stuff(output,beg=beg,thin=thin)
+
+
+# Plot the credible and prediction intervals.
+par(mfrow=c(1,1))
+output2 <- credi_predi(output, beg=beg, thin=thin)
+plot_stuff(output2)
+
+# A summary table of parameter estimates
+tab1[order(tab1[,"Var"]),]
+```
+
+
+## Task 3: Implement in BUGS
+
+Burn-in is about 1000 and thin is set to 50 (though this is probably somewhat excessive it ran fast enough). The MCMC was run for 251000 iterations, yielding a sample size of 5001. This took about 2 minutes on my desktop, as opposed to 30 minutes for the R code.
+
+I did not end up using the BUGS tools to plot the predictive/credible intervals. I reused my code from above -plot_stuff()- after importing the data into R.
+
+```
+In R:
+dput(list(grow=grow,L=L,n=130))
+In Bugs:
+model{
+  beta[1] ~ dnorm(0,0.001)    ## priors
+	beta[2] ~ dnorm(0,0.001)  
+	theta ~ dbeta(1.91,10.17)  # Beta prior on theta
+	prec ~ dgamma(0.1,0.1)
+	sd <- sqrt(1/prec)
+	
+    for(i in 1:n){
+	    Eg[i] <- beta[1] + beta[2]*L[i]/(theta+L[i])     ## process model
+    	grow[i] ~ dnorm(Eg[i],prec)     ## data model
+    	Pg[i]  ~ dnorm(Eg[i],prec)       ## prediction
+    }
+}
+# Data omitted for brevity
+```
+
+
+```{r}
+setwd("C:/Users/mm/Dropbox/Coursework/2014 Fall/GE509/Labs/EE509/data/")
+beta <- read.coda("lab_07_beta.txt", index.file = "lab_07_beta_index.txt", thin=50)
+theta <- read.coda("lab_07_theta.txt", index.file = "lab_07_theta_index.txt", thin=50)
+prec <- read.coda("lab_07_prec.txt", index.file = "lab_07_prec_index.txt", thin=50)
+
+# Already thinned
+Eg <- read.coda("lab_07_Eg.txt", index.file = "lab_07_Eg_index.txt")
+Pg <- read.coda("lab_07_Pg.txt", index.file = "lab_07_Pg_index.txt")
+par(mfrow=c(1,1))
+pairs(cbind(beta0=beta[,1], beta1=beta[,2], var=1/prec[,1],theta=theta), cex=0.5)
+
+plot(beta, main="Beta")
+plot(theta, main="Theta")
+plot(prec, main="prec")
+
+# plot and Compare 
+
+# calculate credi/predi and conform to input expected for plot_stuff()
+d$xpred <- d$L
+d$ci <- apply(data.frame(Eg), 2, quantile, probs = c(0.025, 0.5, 0.975))
+d$pi <- apply(data.frame(Pg), 2, quantile, probs = c(0.025, 0.975))
+plot_stuff(d)
+plot_stuff(output2)
+
+# conform data to expected input for table_stuff()
+d$sumB <- summary(beta)
+d$sumV <- summary(1/prec)
+d$sumT <- summary(theta)
+
+
+tab2  <- table_stuff(d, thin=1, beg=1) # Note thin and beg =1 because they are already thinned and begged
+tab1  <- cbind(tab1,Method="R")
+tab2  <- cbind(tab2, Method="BUGS")
+table <- rbind(tab1,tab2)
+table[order(table$Var),]
+# No major differences
+```
+
+No major differences can be spotted between the regression.
+
+### DIC
+
+I found the DIC from the Michaelis-Menton model run in BUGS is:
+Dbar |	Dhat | DIC | pD	
+-----|-------|-----|----
+grow | 937.3 | 934.3 | 940.2 | 2.979
+total |937.3 | 934.3 | 940.2 | 2.979
+
+I'm really not sure what to do here. Or what to compare this too.
