@@ -1,0 +1,14 @@
+model
+{
+    mu ~ dnorm(7, 0.001)
+    sigma ~ dgamma(0.001, 0.001)
+    tau.t ~ dgamma(0.001, 0.001)
+    for (t in 1:nt) {
+        alpha.t[t] ~ dnorm(0.00000E+00, tau.t)
+        Ex[t] <- mu + alpha.t[t]
+        for (i in 1:nrep) {
+            x[t, i] ~ dnorm(Ex[t], sigma)
+        }
+        px[t] ~ dnorm(Ex[t], sigma)
+    }
+}

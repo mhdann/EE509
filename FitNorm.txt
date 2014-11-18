@@ -1,0 +1,8 @@
+model
+{
+    mu ~ dnorm(0.00000E+00, 0.001)
+    prec ~ dgamma(0.1, 0.1)
+    for (i in 1:n) {
+        x[i] ~ dnorm(mu, prec)
+    }
+}

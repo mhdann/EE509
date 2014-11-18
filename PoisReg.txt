@@ -1,0 +1,11 @@
+model
+{
+    for (i in 1:2) {
+        beta[i] ~ dnorm(0.00000E+00, 0.001)
+    }
+    for (i in 1:n) {
+        log(mu[i]) <- beta[1] + beta[2] * TDR[i]
+        y[i] ~ dpois(mu[i])
+        py[i] ~ dpois(mu[i])
+    }
+}

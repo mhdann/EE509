@@ -1,0 +1,9 @@
+model {
+  for(i in 1:2) { beta[i] ~ dnorm(0,0.001)}    ## priors
+  for(i in 1:n){
+    log(mu[i]) <- beta[1]+beta[2]*TDR[i]     ## process model
+    ## Process model has log() link
+    y[i] ~ dpois(mu[i])  			## data model
+    py[i] ~ dpois(mu[i])			## Prediction
+  }
+}

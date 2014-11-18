@@ -1,0 +1,13 @@
+model
+{
+    for (i in 1:2) {
+        beta[i] ~ dnorm(0.00000E+00, 0.001)
+    }
+    r ~ dunif(0.00000E+00, 100)
+    for (i in 1:n) {
+        log(mu[i]) <- beta[1] + beta[2] * TDR[i]
+        b[i] <- r/mu[i]
+        lambda[i] ~ dgamma(r, b[i])
+        y[i] ~ dpois(lambda[i])
+    }
+}

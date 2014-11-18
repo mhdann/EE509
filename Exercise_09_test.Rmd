@@ -1,0 +1,80 @@
+---
+title: 'Lab 09: Linear Model Extentions'
+author: "GE 509"
+date: "October 20, 2014"
+output: pdf_document
+---
+
+The objective of this lab is to apply the techniques we have been learning about ways to relax the assumptions of linear models and to gain additional practice with Likelihood and Bayesian models of progressively greater complexity.  Specifically, we will start from a Generalized Linear Models framework, and then additionally consider techniques for dealing with 'errors in variables' and missing data. In this lab you will be presented with the code for the model itself but will be asked to apply what you've learned in previous labs to complete the rest of the analysis. 
+
+Note: As in the previous MCMC labs, the number of samples required for publication-quality inference is a good bit larger than the number we expect you to run in lab.  In general, it is better to thin less than to estimate with a very small MCMC sample size provided your posterior densities are smooth and unimodal.  If the posteriors have multiple modes due to slow mixing or lack of convergence they you just have to run longer.
+
+## Case Study:  Seedling Recruitment and Soil Moisture
+
+In this analysis we'll consider the relationship between soil moisture and seedling densities.  The response data (y) in this analysis consists of counts of seedlings in 1m x 1m plots.  Soil moisture was measured using Time Domain Reflectometry (TDR), a technique where two metal rods are inserted into the ground and an electrical pulse is sent down one rod and measured on the other.  The TDR technique actually measures soil impedance, not soil moisture, but soil moisture can be estimated based on empirical calibrations against gravimetric soil moisture measurements (difference between wet and dry weight of soil cores).  TDR has the advantage of being much less labor intensive and non-destructive than gravimetric measurement, which permits repeated measurements of the same plots.
+  The Poisson distribution is a natural choice for modeling the seedling count data because the data is both discrete and lacking a defined upper bound.  Since we are interested in the relationship between seedling density and a covariate, soil moisture, we'll make use of the Generalized Linear Models (GLM) framework for fitting a Poisson regression.  As a link function, lets start with the standard choice of a log link.
+ 
+$$log(\mu) = \beta_0 + \beta_1 TDR$$
+$$y \sim Pois(\mu)$$
+ 
+The data for this analysis are provided to you as a R data object that contains the following variables:
+
+	n – sample size
+	y – seedling counts (individuals/m2)
+	TDR – raw output from the TDR unit (arbitrary units) for each seedling plot
+	TDRc – raw TDR output for the calibration samples
+	SMc – Volumetric soil moisture measurements for the calibration samples (m3/m3)
+	SMseq – a sequence of soil moisture values used for prediction
+
+```{r}
+load("data/Lab9.RData")
+```
+
+For the first part of this analysis we will use the TDR measurements as our covariate.  We will deal with the calibration issue later in the lab.
+
+## Maximum Likelihood Poisson Regression
+
+To begin, open up R and load the data file in order to perform some exploratory data analysis and to look at the analysis from a Likelihood perspective.  As a reminder from lecture, the Likelihood analysis could be performed two ways in R.  The first would be to use the “glm” function
+
+```{r}
+PR1 = glm(y ~ TDR, family=poisson(link="log"))
+```
+
+The second approach would be to define the negative log likelihood function yourself and then use a nonlinear optimization function (e.g. nlm, optim) to find the MLE
+ 
+```{r}
+ic=c(0,0)
+LnL = function(beta){
+  -sum(dpois(y,exp(beta[1] + beta[2]*TDR),log=TRUE))
+}
+PR2 = nlm(LnL,ic)
+```
+
+### Lab Report Task 1
+
+1.  Plot seedling densities as a function of TDR
+2.	Fit the Poisson regression model using one of the methods above and turn in  the summary output (hint: for the second method you will need to define the initial condition vector ic) 
+3.	Add regression lines to the plot
+Hint 1: use “coef” to extract the regression coefficients from the GLM.
+Hint 2: don't forget about the link function when plotting the lines
+4.	Briefly describe how you would add model confidence and predictive intervals to these curves
+5.	What would be an appropriate null model to compare to?  What metric would you use to compare the two models?
+6.	Plot the calibration data of TDR vs. soil moisture.  Fit a Normal regression model to the calibration data, add the line to the plot, and report the summary table information for the fit
+
+
+## Bayesian Poisson Regression
+
+Next we're going to fit the Poisson regression model from the Bayesian perspective using BUGS.  This will allow you to compare the Likelihood and Bayesian approaches and will serve as the foundation for building a more complex model.  As discussed in lecture, the Poisson regression model in BUGS is
+
+```{r}
+PoisReg = "
+model {
+  for(i in 1:2) { beta[i] ~ dnorm(0,0.001)}    ## priors
+  for(i in 1:n){
+    log(mu[i]) <- beta[1]+beta[2]*TDR[i]     ## process model
+    y[i] ~ dpois(mu[i])  			## data model
+    py[i] ~ dpois(mu[i])			## Prediction
+  }
+}
+"
+```

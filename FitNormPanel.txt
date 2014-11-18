@@ -1,0 +1,10 @@
+model
+{
+    mu ~ dnorm(7, 0.001)
+    prec ~ dgamma(0.01, 0.01)
+    for (t in 1:nt) {
+        for (i in 1:nrep) {
+            x[t, i] ~ dnorm(mu, prec)
+        }
+    }
+}
