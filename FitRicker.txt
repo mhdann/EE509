@@ -1,0 +1,20 @@
+model
+{
+    r ~ dnorm(0.00000E+00, 25)
+    sinv ~ dgamma(0.01, 0.01)
+    tinv ~ dgamma(0.01, 0.01)
+    k ~ dlnorm(0.00000E+00, 0.01)
+    sigma <- 1/sinv
+    tau <- 1/tinv
+    x[1] ~ dnorm(2, 1)
+    for (i in 2:N) {
+        u[i] <- x[i - 1] + r * (1 - exp(y[i - 1])/k)
+        x[i] ~ dnorm(u[i], sinv)
+    }
+    for (i in 1:N) {
+        y[i] ~ dnorm(x[i], tinv)
+    }
+    for (i in 1:N) {
+        Px[i] ~ dnorm(x[i], tinv)
+    }
+}

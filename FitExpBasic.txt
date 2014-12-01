@@ -1,0 +1,16 @@
+model
+{
+    r ~ dnorm(0.00000E+00, 25)
+    tinv ~ dgamma(0.01, 0.01)
+    tau <- 1/tinv
+    x[1] ~ dnorm(2, 1)
+    for (i in 2:N) {
+        x[i] <- x[i - 1] + r
+    }
+    for (i in 1:N) {
+        y[i] ~ dnorm(x[i], tinv)
+    }
+    for (i in 1:N) {
+        Px[i] ~ dnorm(x[i], tinv)
+    }
+}

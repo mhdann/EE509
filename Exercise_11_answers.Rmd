@@ -1,6 +1,6 @@
 ---
-title: 'Exercise 11: State Space'
-author: "GE 509"
+title: 'Lab 11 - State Space'
+author: "Michael Dann"
 date: "November 17, 2014"
 output: html_document
 ---
@@ -77,6 +77,9 @@ Lab Report Task 1
 ```{r}
 library(BRugs)
 library(R2WinBUGS)
+library(ggplot2)
+library(reshape)
+
 # Data read and shaping
 alces <- read.table("data/alcesdata.txt", header=T)
 data <- list()
@@ -92,6 +95,7 @@ FitExp <- function(){
   sigma <- 1/sinv
   tau   <- 1/tinv
   x[1] ~ dnorm(2, 1)
+  # Process model
   for(i in 2:N) {
     u[i] <- x[i-1] + r
     x[i] ~ dnorm(u[i],sinv)
@@ -107,41 +111,243 @@ FitExp <- function(){
 }
 
 write.model(model = FitExp, con = "FitExp.txt")
+
 init.cond1 <- function(){
   ## starts each chain from the same initial conditions
-  list(sigma=25, tau=25,r=0.1, x=2*exp(0.1*seq(1:48)))
+  list(sinv=25, tinv=25,r=0.1, x=2*0.1*seq(1:48))
 }
 
 b1 = openbugs(data=data,  ## data passed to the model
   init=init.cond1,    ## initial conditions, NULL is equivalent to “gen inits”
   model.file="FitExp.txt",  ## file name of our BUGS file 
   n.chains=3,		## number of MCMC chains
-	n.iter=2000,		## length of each chain
+	n.iter=3500,		## length of each chain
 	n.burnin=100,		## burn in to exclude
 	n.thin = 2,		## thin
-	parameters.to.save=c("x","px","sigma", "tau","r")  ## parameters we want to track
+	parameters.to.save=c("x","Px","sigma", "tau","r")  ## parameters we want to track
 )
 
 quants1 <- apply(b1$sims.matrix,2, quantile, c(0.025, 0.5, 0.975))
 quants1
 
-plot(1946:1993,data$y, ylim=c(min(quants1[,1:48]),max(quants1[,1:48])), main="Exp Fit", xlab = "Year",ylab="Log Population")
-lines(1946:1993, quants1[2,1:48], col=3) # median
-lines(1946:1993, quants1[1,1:48], col=3, lty=2) # CI
-lines(1946:1993, quants1[3,1:48], col=3, lty=2) # CI
-#lines(1946:1993, quants1[1,11:20], col=2, lty=2) # PI
-#lines(1946:1993, quants1[3,11:20], col=2, lty=2) # PI
 ```
 Also include the following plots:
 
 
 a) Plots of the time series data on both the LOG and LINEAR scales that include the model mean and credible intervals.
+```{r}
+plot(1946:1993,exp(data$y), ylim=c(min(exp(quants1[,1:48])),max(exp(quants1[,1:48]))), main="Exp Fit", xlab = "Year",ylab="Population")
+lines(1946:1993, exp(quants1[2,1:48]), col=3) # median
+lines(1946:1993, exp(quants1[1,1:48]), col=3, lty=2) # CI
+lines(1946:1993, exp(quants1[3,1:48]), col=3, lty=2) # CI
+
+plot(1946:1993,data$y, ylim=c(min(quants1[,1:48]),max(quants1[,1:48])), main="Exp Fit", xlab = "Year",ylab="Log Population")
+lines(1946:1993, quants1[2,1:48], col=3) # median
+lines(1946:1993, quants1[1,1:48], col=3, lty=2) # CI
+lines(1946:1993, quants1[3,1:48], col=3, lty=2) # CI
+```
+
 b) Density plots for the predicted values for the missing data
+```{r}
+
+dens1 <- apply(b1$sims.matrix, 2, density)
+
+index <- which(is.na(data$y))
+x_index <- paste("x[",index,"]",sep="")
+for(x_ind in x_index){
+  plot(dens1[[x_ind]],main=paste(x_ind, "log scale"))
+}
+
+wide <- melt(b1$sims.matrix[,x_index])
+ggplot(wide, aes(y=value, x=factor(X2))) + geom_boxplot(outlier.shape=NA) + theme_bw() + xlab("missing ob") + ylab("log-population")
+
+```
+
 c) Density plots of the intrinsic growth rate, the observation error variance, and the process model error variance
+```{r}
+for(lab in c("r","sigma","tau")){
+  plot(dens1[[lab]],main=lab)
+}
+```
+Note: $\tau$ and $\sigma$ represent variances here where traditionally variances are represented as $\sigma^2$ or $\tau^2$.
+
 2.	Modify the exponential growth process model in the BUGS code to instead be the Ricker growth model.  Rerun including your BUGS code and the same figures as in part 1 plus plots for both the prior and posterior density on the carrying capacity.
+
+```{r}
+# Bugs Model
+FitRicker <- function(){
+  r ~ dnorm(0,25)  # r is mean zero w/ sd = 0.2
+  sinv ~ dgamma(0.01, 0.01)
+  tinv ~ dgamma(0.01,0.01)
+  k ~ dlnorm(0,0.01)
+  sigma <- 1/sinv
+  tau   <- 1/tinv
+  x[1] ~ dnorm(2, 1)
+  # Process model
+  for(i in 2:N) {
+    u[i] <- x[i-1] + r*(1-exp(y[i-1])/k)
+    x[i] ~ dnorm(u[i],sinv)
+  }
+  # Data model
+  for(i in 1:N){
+    y[i] ~ dnorm(x[i], tinv)    
+  }
+  # Simulation:
+  for(i in 1:N){
+    Px[i] ~ dnorm(x[i],tinv)
+  }
+}
+
+write.model(model = FitRicker, con = "FitRicker.txt")
+
+init.cond2 <- function(){
+  ## starts each chain from the same initial conditions
+  list(sinv=25, tinv=25,r=0.13, x=0.13*seq(1:48), k=5)
+}
+
+b2 = openbugs(data=data,  ## data passed to the model
+  init=init.cond2,    ## initial conditions, NULL is equivalent to “gen inits”
+  model.file="FitRicker.txt",  ## file name of our BUGS file 
+  n.chains=3,  	## number of MCMC chains
+	n.iter=3500,		## length of each chain
+	n.burnin=100,		## burn in to exclude
+	n.thin = 2,		## thin
+	parameters.to.save=c("x","Px","sigma", "tau","r","k")  ## parameters we want to track
+)
+
+quants2 <- apply(b2$sims.matrix,2, quantile, c(0.025, 0.5, 0.975))
+quants2
+
+plot(1946:1993,exp(data$y), ylim=c(min(exp(quants2[,1:48])),max(exp(quants2[,1:48]))), main="Ricker Fit", xlab = "Year",ylab="Population")
+lines(1946:1993, exp(quants2[2,1:48]), col=3) # median
+lines(1946:1993, exp(quants2[1,1:48]), col=3, lty=2) # CI
+lines(1946:1993, exp(quants2[3,1:48]), col=3, lty=2) # CI
+
+plot(1946:1993,data$y, ylim=c(min(quants2[,1:48]),max(quants2[,1:48])), main="Ricker Fit", xlab = "Year",ylab="Log Population")
+lines(1946:1993, quants2[2,1:48], col=3) # median
+lines(1946:1993, quants2[1,1:48], col=3, lty=2) # CI
+lines(1946:1993, quants2[3,1:48], col=3, lty=2) # CI
+
+
+prior_k <- density(rnorm(5000, mean = 0,sd = 1/sqrt(0.01)))
+posterior_k <- density(log(b2$sims.matrix[,"k"]))
+
+plot(prior_k, col=2, ylim=c(0.0,0.8), xlim=c(-30,30), main="K")
+lines(posterior_k, col=3)
+median_logk = round(log(quants2[2,"k"]),3)
+abline(v = median_logk, lty=2)
+legend("topleft", legend = c("Prior", "Posterior",paste("Median log(k) =", median_logk)), col=c(2,3,1),lty = c(1,1,2))
+
+dens2 <- apply(b2$sims.matrix, 2, density)
+
+for(x_ind in x_index){
+  plot(dens2[[x_ind]],main=paste(x_ind, "log scale"))
+}
+
+wide <- melt(b2$sims.matrix[,x_index])
+ggplot(wide, aes(y=value, x=factor(X2))) + geom_boxplot(outlier.shape=NA) + theme_bw() + xlab("missing ob") + ylab("log-population")
+
+# Density plots of the intrinsic growth rate, the observation error variance, and the process model error variance
+for(lab in c("r","sigma","tau")){
+  plot(dens2[[lab]],main=lab)
+}
+```
+
 3.	Construct a summary table that includes the parameters in both models, their 95% CI, and the model DIC scores.
+
+```{r}
+cols <- c(1, 3,5,7) # mean, 2.5%, 50%, 97.5%
+b1_vars<-c("sigma","tau", "r", "deviance")
+b2_vars<-c("sigma","tau", "r", "k","deviance")
+
+results <- rbind(cbind.data.frame(model="b1", var=b1_vars, b1$summary[b1_vars,cols]), cbind.data.frame(model="b2", var=b2_vars, b2$summary[b2_vars,cols]))
+rownames(results) <- NULL
+results
+
+data.frame(model = c(paste0("b",1:2)),DIC = c(b1$DIC, b2$DIC))
+```
+
+Note: $\tau$ and $\sigma$ are variances. Carrying capacity k is in the log-space.
+
 4.	Briefly give an interpretation of your results.  Be sure to comment on which model is a better fit, what you can interpret about the importance of density dependence in regulating this population, and whether the population is at its carrying capacity.  
+
+The DIC for the exponential fit is much lower, indicating that the exponential fit is the more parsimonious of the two. The Ricker model indicates a carrying capacity of `r round(b2$median$k)`. Visually the plot appears to confirm this, but strictly speaking, k should probably not be considered significant in light of the DICs. It should be noted that by adding a little bit of noise to an exponential process, pseudodata will lead to many regressions which the Ricker model will indicate a k that is *just barely in the tail* of the series. That is k=`r round(b2$median$k)` is awfully close to the max of the series, and in the event of a true process which is exponential, that is what we would expect in the regression.
+
+Here we should use the DIC and discard any meaning for k.
+
 5.	What can you infer about the relative importance of autogenic vs exogenous factors in regulating this population?
+
+Presence of an autogenic factor can be determined, r. Presence of an exogenous factor such as carrying capacity is ambiguous. There are factors external to the data leading us to believe carry capacity exists, but it cannot be determined from this data.
+
 6.	**Extra Credit**: An alternative to fitting this model as a time-series would have been to fit the data to the general solution for the model (e.g. for the exponential growth model, this would have been $N[1]*exp[r*t]$  ), which would have ignored the process varibility.  To approximate the difference in the resulting prediction, generate a plot for the best fitting model (Exponential or Ricker) that contains both (1) the posterior mean model from your Bayesian fit, and (2) the prediction from the process model using the posterior mean of the parameters and ignoring process error.  Comment on the difference between these two lines.
 
+```{r}
+FitExpBasic <- function(){
+  r ~ dnorm(0,25)  # r is mean zero w/ sd = 0.2
+  tinv ~ dgamma(0.01,0.01)
+  tau   <- 1/tinv
+  x[1] ~ dnorm(2, 1)
+  # Process model
+  for(i in 2:N) {      
+    x[i] <- x[i-1]+r
+  }
+  # Data model
+  for(i in 1:N){
+    y[i] ~ dnorm(x[i], tinv)    
+  }
+  # Simulation:
+  for(i in 1:N){
+    Px[i] ~ dnorm(x[i],tinv)
+  }
+}
 
+write.model(model = FitExpBasic, con = "FitExpBasic.txt")
+
+init.cond3 <- function(){
+  ## starts each chain from the same initial conditions
+  list(tinv=25,r=0.1, x=2*0.1*seq(1:48))
+}
+
+b3 = openbugs(data=data,  ## data passed to the model
+  init=init.cond3,    ## initial conditions, NULL is equivalent to “gen inits”
+  model.file="FitExpBasic.txt",  ## file name of our BUGS file 
+  n.chains=3,  	## number of MCMC chains
+	n.iter=3500,		## length of each chain
+	n.burnin=100,		## burn in to exclude
+	n.thin = 2,		## thin
+	parameters.to.save=c("x","Px","tau","r")  ## parameters we want to track
+)
+
+quants3 <- apply(b3$sims.matrix,2, quantile, c(0.025, 0.5, 0.975))
+quants3
+
+plot(1946:1993,exp(data$y), ylim=c(min(exp(quants3[,1:48])),max(exp(quants3[,1:48]))), main="Exp Fit", xlab = "Year",ylab="Population")
+lines(1946:1993, exp(quants3[2,1:48]), col=3) # median
+lines(1946:1993, exp(quants3[1,1:48]), col=3, lty=2) # CI
+lines(1946:1993, exp(quants3[3,1:48]), col=3, lty=2) # CI
+
+lines(1946:1993, exp(quants1[2,"x[1]"])*exp(quants1[2,"r"]*(0:47)), col=2) # median
+
+lines(1946:1993, exp(quants1[2,1:48]), col=4) # median
+lines(1946:1993, exp(quants1[1,1:48]), col=4, lty=2) # CI
+lines(1946:1993, exp(quants1[3,1:48]), col=4, lty=2) # CI
+
+legend("topleft", legend=c("Exp w/no proc err", "Exp w/proc err. Proc err not simulated.","Exp w/proc err"), col=c(3,2, 4), lty=c(1,1,1))
+
+```
+
+The major difference when the process error is removed from the projection (blue curve to red curve) is that the initial points now significantly weight down the red curve. The process error is what keeps the blue curve on the data.
+
+The green curve, or the exponential w/process error actually fit to the data, has a different starting point, over a factor of 10 higher. That's what accounts for the primary difference between the green and red curves (despite having practically the same r,  rgreen = `r b3$mean$r`,  rred = rblue = `r b1$mean$r`). The red and the green curves could be made to nearly overlap, provided an appropriate choice of x[1].
+
+Just offhand I can set x[1] to the mean of x[1] in b3.
+
+```{r}
+plot(1946:1993,exp(data$y), ylim=c(min(exp(quants3[,1:48])),max(exp(quants3[,1:48]))), main="Exp Fit", xlab = "Year",ylab="Population")
+lines(1946:1993, exp(quants3[2,1:48]), col=3) # median
+lines(1946:1993, exp(quants3[1,1:48]), col=3, lty=2) # CI
+lines(1946:1993, exp(quants3[3,1:48]), col=3, lty=2) # CI
+
+lines(1946:1993, exp(quants3[2,"x[1]"])*exp(quants1[2,"r"]*(0:47)), col=2) # median
+legend("topleft", legend=c("Exp w/no proc err", "Exp w/proc err. Proc err not simulated. Choice x[1]"), col=c(3,2, 4), lty=c(1,1,1))
+```
