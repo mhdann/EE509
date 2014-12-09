@@ -1,7 +1,7 @@
 ---
 title: "Lab 13 - Exploratory Data Analysis in Time and Space"
-author: "GE 509"
-date: "December 1, 2014"
+author: "Michael Dann"
+date: "December 8, 2014"
 output: html_document
 ---
 
@@ -41,13 +41,18 @@ The **trmat** (trend matrix) command takes the output of the surf.ls command and
  
 ### Lab Report Task 1
 
-1. Calculate the trend surface for higher order polynomials (at least 1st and 2nd) and include the plots in the lab report.  Do higher order polynomials capture large scale trends or are all the trends finer scale?  **What order polynomial would you choose to detrend your data?**
+**1. Calculate the trend surface for higher order polynomials (at least 1st and 2nd) and include the plots in the lab report.  Do higher order polynomials capture large scale trends or are all the trends finer scale?  What order polynomial would you choose to detrend your data?**
  
 ```{r}
 surf1 <- surf.ls(1,dat$Lon,dat$Lat,dat$Mean)   ## 1st-degree polynomial surface
 surf2 <- surf.ls(2,dat$Lon,dat$Lat,dat$Mean)   ## 2nd-degree polynomial surface
-tr1 <- trmat(surf1,-125,-65,25,50,50)          ## project a 50x50 matrix within
-tr2 <- trmat(surf2,-125,-65,25,50,50)          ## project a 50x50 matrix within region
+surf3 <- surf.ls(3,dat$Lon,dat$Lat,dat$Mean)   ## 3rd-degree polynomial surface
+surf4 <- surf.ls(4,dat$Lon,dat$Lat,dat$Mean)   ## 4th-degree polynomial surface
+
+tr1 <- trmat(surf1,-125,-65,25,50,50)          ## project a 50x50 matrix
+tr2 <- trmat(surf2,-125,-65,25,50,50)          ## project a 50x50 matrix
+tr3 <- trmat(surf3,-125,-65,25,50,50)          ## project a 50x50 matrix
+tr4 <- trmat(surf4,-125,-65,25,50,50)          ## project a 50x50 matrix
 image(tr1,asp=70/50)                           ## color image map of the surface
 map("state",add=TRUE)
 points(dat$Lon,dat$Lat,pch="+",col=dat$Mean/10)
@@ -55,16 +60,26 @@ points(dat$Lon,dat$Lat,pch="+",col=dat$Mean/10)
 image(tr2,asp=70/50)                           ## color image map of the surface
 map("state",add=TRUE)
 points(dat$Lon,dat$Lat,pch="+",col=dat$Mean/10)
+
+image(tr3,asp=70/50)                           ## color image map of the surface
+map("state",add=TRUE)
+points(dat$Lon,dat$Lat,pch="+",col=dat$Mean/10)
+
+image(tr4,asp=70/50)                           ## color image map of the surface
+map("state",add=TRUE)
+points(dat$Lon,dat$Lat,pch="+",col=dat$Mean/10)
 ``` 
+
+The third degree polynomial looks good enough. The fourth order polynomial doesn't appear to pick up many more details.
 
 Now that we've calculated a trend surface let’s calculate the correlogram and variogram in order to estimate the scale of spatial autocorrelation. *In the code below, make sure to substitute **surf0** with the polynomial surface you chose from Task 1*:
  
 ```{r}
-vg <- variogram(surf2,300,xlim=c(0,10),ylim=c(0,1.1*var(dat$Mean)))
+vg <- variogram(surf3,300,xlim=c(0,10),ylim=c(0,1.1*var(dat$Mean)))
 
 abline(h=var(dat$Mean))                   ## asymptotic variance
 
-cg<- correlogram(surf2,300,xlim=c(0,10))  ## limit the range of radii to the initial decay
+cg  <- correlogram(surf3,300,xlim=c(0,10))  ## limit the range of radii to the initial decay
 ```
  
 The variogram and correlogram both take the object output from surf.ls as their first argument, from which they are able to access the detrended residuals.  The second argument in both functions is the number of bins that you want to include in calculating the variogram or correlogram.  Be aware that a larger number of bins is not always better because the code will drop bins that have too few observations (<6).  The third argument is just restricting our plots to the shorter distance lags where there is significant autocorrelation.  The units in x are degrees so here “short” distance lags are still 100s of miles.  The units in the y-axis for the variogram are in variance and the abline command provides the overall variance of the data which the variogram should asymptote to at large lags.  The units on the y-axis of the correlogram are in terms of correlation (ranges from -1 to 1).  Both the variogram and correlogram functions provide a plot by default. We are additionally assigning the output of these functions to a variable name so that we can access the data directly.
@@ -82,6 +97,28 @@ expfit <- function(theta){    ## negative log likelihood function
 }
 efit <- optim(c(2,0.1,1,0.01),expfit)    ## numerical optimization
 efit
+
+gaufit <- function(theta){    ## negative log likelihood function
+  d = theta[1]
+  alpha = theta[2]
+  se = theta[3]
+  sigma = theta[4]
+  -sum(dnorm(cg$y[rng],gaucov(cg$x[rng],d,alpha,se),sigma,log=TRUE)) 
+}
+gfit <- optim(c(2,0.1,1,0.01),gaufit)    ## numerical optimization
+gfit
+
+sphfit <- function(theta){    ## negative log likelihood function
+  d = theta[1]
+  alpha = theta[2]
+  se = theta[3]
+  sigma = theta[4]
+  D = theta[5]
+  -sum(dnorm(cg$y[rng],sphercov(cg$x[rng],d,alpha,se,D),sigma,log=TRUE)) 
+}
+sfit <- optim(c(2,0.1,1,0.5,0.01),sphfit)    ## numerical optimization
+sfit
+
 ```
 
 In the above example we restricted the range of the values from the correlogram to just the first 10 bins.  This was done because we are really just interested in the initial decline phase and the number of bins would change depending on how long it takes the correlogram to converge to zero.
@@ -90,24 +127,38 @@ Next, let’s plot the correlation functions over the correlogram to visually in
 
 ```{r}
 par(lwd=2,cex=1.1)
-cg <- correlogram(surf0,300,xlim=c(0,10))
+cg <- correlogram(surf3,300,xlim=c(0,10))
 lines(cg$x,expcov(cg$x,efit$par[1],efit$par[2],efit$par[3]),lwd=3)
-#lines(cg$x,gaucov(cg$x,gfit$par[1],gfit$par[2],gfit$par[3]),col=2,lwd=3)
-#lines(cg$x,sphercov(cg$x,sfit$par[1],sfit$par[2],sfit$par[3],sfit$par[4]),col=3,lwd=3)
+lines(cg$x,gaucov(cg$x,gfit$par[1],gfit$par[2],gfit$par[3]),col=2,lwd=3)
+lines(cg$x,sphercov(cg$x,sfit$par[1],sfit$par[2],sfit$par[3],sfit$par[4]),col=3,lwd=3)
 legend("topright",legend=c("Exponential","Gaussian","Spherical"),col=1:3,lwd=2)
 
 ```
 
 ## Lab Report Task 2
 
-2.  **EXTRA CREDIT**: There are two other correlation functions built into the spatial package, the Gaussian covariance *gaucov* and the spherical covariance *sphercov*.  Derive MLE for these two functions via numerical optimization.  Turn in an AIC table for the models you fit and identify the best fitting model that you will use for Kriging
-3.	Explain the figure generated from the previous box of code. What is being plotted (axes, data, model)? How would you interpret this figure? How would you interpret the parameters of the best-fit model? What is the range? Note: you do not need to include the Gaussian and spherical lines if you did not fit them in the previous step.
+**2.  EXTRA CREDIT: There are two other correlation functions built into the spatial package, the Gaussian covariance *gaucov* and the spherical covariance *sphercov*.  Derive MLE for these two functions via numerical optimization.  Turn in an AIC table for the models you fit and identify the best fitting model that you will use for Kriging**
+
+```{r}
+data.frame(Model=c("Exponential","Gaussian","Spherical"),ln_likelihood=c(-efit$value,-gfit$value, -sfit$value),AIC=c(2*(4+efit$value),2*(4+gfit$value),2*(5+sfit$value)))
+```
+
+The Gaussian fit looks best. But only just.
+
+**3.	Explain the figure generated from the previous box of code. What is being plotted (axes, data, model)? How would you interpret this figure? How would you interpret the parameters of the best-fit model? What is the range? Note: you do not need to include the Gaussian and spherical lines if you did not fit them in the previous step.**
+
+The xp axis (horizontal) represents bin-centers of the correlogram. I believe that was in degrees, so 1 degree bins of the pair-wise distances (lots of pairs in this set).
+
+The vertical represents the covariance between ozone levels at points in the corresponding bin.
+
+The range, distance to assymptote, is about 2 to 2.25 degrees, which is about 200 miles depending on assumptions about whether these are degrees latitude or longitude.
+
 
 Now that we have a covariance function we are ready to proceed with Kriging.  The code below is based on the expcov covariance function and a 0th order polynomial, but **you should use the polynomial you selected previously (and the optimal covariance function, if you completed the extra credit task)**.
  
 ```{r}
-KrExp <- surf.gls(0,expcov,dat$Lon,dat$Lat,dat$Mean,
-           d=efit$par[1],alpha=efit$par[2],se=efit$par[3])  ##construct surface
+KrExp <- surf.gls(3,gaucov,dat$Lon,dat$Lat,dat$Mean,
+           d=gfit$par[1],alpha=gfit$par[2],se=gfit$par[3])  ##construct surface
 pr3 <- prmat(KrExp,-125,-65,25,50,100)                      ## predict to a matrix
 image(pr3,main="Krige",cex.main=2,asp=70/50)                ## image of predictions
 contour(pr3,add=TRUE,lwd=1) ## conv to ppb                  ## contours of prediction
@@ -120,9 +171,25 @@ The *surf.gls* function is similar to the *surf.ls* function but it differs in t
  
 ### Lab Report Task 3
 
-4.  Include your kriged map of mean US ozone for 2008 in your lab report.  Where in the country has the highest ozone levels?
-5.	Generate a second map of mean US ozone but this time include contours based on the error matrix rather than the prediction matrix.  Where are ozone levels most uncertain?
-6.	There are a few reasons that one might be skeptical of this initial exploratory map.  Name at least two and describe ways the model could be improved (without collecting additional data).
+**4.  Include your kriged map of mean US ozone for 2008 in your lab report.  Where in the country has the highest ozone levels?**
+
+(map, see above) Mohave desert, Phoenix area, Salt Lake City, Appalachia, Colorado Springs corridor.
+
+**5.	Generate a second map of mean US ozone but this time include contours based on the error matrix rather than the prediction matrix.  Where are ozone levels most uncertain?**
+
+```{r}
+image(se3,main="Krige",cex.main=2,asp=70/50)                ## image of predictions
+contour(se3,add=TRUE,lwd=1) ## conv to ppb                  ## contours of prediction
+map("state",add=TRUE)
+```
+
+The instructions said to use the Kriging map of mean Ozone along with the contours of the uncertainty. This didn't make much sense so I used the map of the uncertainty and the contours of the uncertainty.
+
+The largest uncertainty lies in the rural areas where the data is sparse: various places throughout the west mostly. Montana/Idaho/Nebraska/Texas Panhandle etc.
+
+**6.	There are a few reasons that one might be skeptical of this initial exploratory map.  Name at least two and describe ways the model could be improved (without collecting additional data).**
+
+As per the previous hint, we have not fit the full spatial model to the data map. We've fit a curve to the correlogram which itself is a reduced form of the data. We could fit the surface to the full map.
 
 ## Part 2: National Ozone Time Series
 
@@ -148,15 +215,16 @@ lines(fx,col=3)
 Second, let’s look at a lowess curve.  Recall that a lowess curve also uses a moving window, but instead of an average it calculates a weighted regression model.  The second parameter to the lowess, f, is the window size expressed as a fraction of the whole time series.  In general, window sizes are much larger with the lowess approach than the moving window because we're fitting a curve through the points.  Feel free to play around with the size of f to see how it affects the smoothness of the curve.
  
 ```{r}
-lx <- lowess(xt,f=1/3)
+lx <- lowess(xt,f=1/4)
 plot(xt,type='b',ylab="ppm",xlab="Year",main="National Ozone Concentrations")
 lines(fx,col=3)
 lines(lx,col=2)
 ```
 
+f = 1 results in a line while f >=10 will be overfit.
 ### Lab Report Task 4
 
-7.  Include the above time series plot and briefly describe the features of the overall trend in ozone concentrations.
+**7.  Include the above time series plot and briefly describe the features of the overall trend in ozone concentrations.**
 
 Now that we've estimated the trend in the data we can remove that trend by subtracting the smoothed time series from the raw time series and look at the characteristics of the residuals.  Remember that after detrending the time series residuals should meet the assumptions of second-order stationarity—mean zero with homeskedastic variance.  For this example lets use the lowess curve as our trend.
 
@@ -181,8 +249,27 @@ hist(dxt,10)
 ```
 
 ### Lab Report Task 5
-8.  Does the detrended data meet the assumptions of second order stationarity? Why or why not?
-9.	Does the first-difference time series meet the assumptions of second order stationarity?  Why or why not?
+**8.  Does the detrended data meet the assumptions of second order stationarity? Why or why not?**
+
+The mean of the detrended series is indistinguishable from zero. Variance appears homoskedastic, though for thoroughness a Brusch-Pagan or a White test for homoscedasticity is performed. Notice that there is no detectable heteroscedasticity in time.
+
+```{r}
+trend <- 1:length(rx) # set up time variable
+fit_rx <- lm(rx~1+trend)
+summary(fit_rx)
+library(lmtest)
+bptest(fit_rx)
+```
+
+**9.	Does the first-difference time series meet the assumptions of second order stationarity?  Why or why not?**
+
+Yes. This first-differenced series is stationary too.
+```{r}
+trend <- 1:length(dxt) # set up time variable
+fit_dxt <- lm(dxt~1+trend)
+summary(fit_dxt)
+bptest(fit_dxt)
+```
 
 Next let's evaluate the autocorrelation and partial autocorrelation in the time series.  You've seen ACFs quite frequently in MCMCs so you should be fairly familiar with their interpretation.  A partial ACF is a variant of ACF where at each lag we're looking at the autocorrelation after having accounted for the autocorrelation at shorter lags.  The number of significant lags in the partial ACF can be a very useful guide to the number of lags that should be included when modeling the system, for example with an ARIMA model.
  
@@ -200,10 +287,42 @@ Now that we've calculated a number of diagnostics, let’s explore how me might 
 ![ARIMA Flow Chart](images/ts002.jpg)
  
  ### Lab Report Task 7
-12.  Based on the diagnostics you have already performed, what ARIMA model is likely to perform best? What orders should p, d, and q be? Why? Should you fit the model to xt or rx?
-13.	Fit the arima model you proposed using the function arima: 
-```
-arima(xt,c(p,d,q))
+**12.  Based on the diagnostics you have already performed, what ARIMA model is likely to perform best? What orders should p, d, and q be? Why? Should you fit the model to xt or rx?**
+
+The ACF of xt demonstrates autocorrelation while the first difference and the trend to not. This indicates that difference or detrending is a useful start (d=1 on the xt series).
+
+The PACF of dxt shows a significant value at lag two, suggesting that at most p = 2.
+
+```{r}
+p = 2
+d = 1
+q = 0
 ```
 
+**13.	Fit the arima model you proposed using the function arima:**
+
+```{r}
+arima.2.1.0<-arima(xt,c(p,d,q))
+```
+
+
 Then propose alternative models that are similar to the one you fit (e.g. increase or decrease orders by 1).  Based on AIC scores what model provides the best fit?  Provide a table of models you tried and their AIC scores.
+```{r}
+# Compare this briefly to d = 0 or p = 1 
+df <- data.frame()
+for(p in 0:2){
+  for(d in 0:1){
+    for(q in 0:1){
+      arima_res <- arima(xt, c(p,d,q))
+      df <- rbind(df, c(p,d,q,arima_res$loglik, arima_res$aic))
+    }
+  }
+}
+names(df) <- c("p","d","q","loglik","aic")
+df[order(df$aic),]
+```
+
+Well, from a naive application of the AIC it seems a simple p=1 suffices. But then I know that the first difference is required for stationarity. I think p=1 yields a comparable because the time frame is so short the trend is essentially linear. Again, though, there isn't much distinction between the first 5 models, and that makes me think that the series is too short to be conclusive. Many of the models appear indistinguishable via the AIC.
+
+With the requirement of differencing for stationarity, the model is probably (2,1,0), though (0,1,1) is not much different.  Purely from the flow chart, I would choose (2,1,0) or (0,1,0). If forced to choose between those, I would choose (2,1,0).
+
